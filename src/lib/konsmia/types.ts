@@ -11,7 +11,7 @@ export interface MacroAnalysis {
   inflation: string;
   geopolitics: string;
   institutionalBehavior: string;
-  score: number; // -100 to 100
+  score: number;
 }
 
 export interface MicroAnalysis {
@@ -26,7 +26,7 @@ export interface PsychologicalAnalysis {
   crowdEmotion: Sentiment;
   retailVsInstitutional: string;
   sentimentShift: string;
-  fearGreedIndex: number; // 0-100
+  fearGreedIndex: number;
   score: number;
 }
 
@@ -73,7 +73,7 @@ export interface KonsmiaModule {
   description: string;
   status: 'online' | 'syncing' | 'offline';
   lastSync: string;
-  integrity: number; // 0-100
+  integrity: number;
 }
 
 export interface MarketData {
@@ -96,4 +96,63 @@ export interface NiuzArticle {
   category: 'analysis' | 'signal' | 'insight' | 'alert';
   asset?: string;
   bias?: MarketBias;
+}
+
+// New types for expanded features
+
+export interface TradeJournalEntry {
+  id: string;
+  timestamp: string;
+  asset: string;
+  direction: 'long' | 'short';
+  entry: number;
+  exit: number;
+  pnl: number;
+  pnlPercent: number;
+  confidence: Confidence;
+  notes: string;
+  tredbeingId?: string;
+}
+
+export interface PortfolioAsset {
+  symbol: string;
+  name: string;
+  allocation: number;
+  value: number;
+  pnl: number;
+  pnlPercent: number;
+}
+
+export interface AlertItem {
+  id: string;
+  timestamp: string;
+  type: 'price' | 'signal' | 'system' | 'risk';
+  severity: 'info' | 'warning' | 'critical';
+  title: string;
+  message: string;
+  read: boolean;
+}
+
+export interface CorrelationPair {
+  assetA: string;
+  assetB: string;
+  correlation: number;
+}
+
+export interface EconomicEvent {
+  id: string;
+  timestamp: string;
+  title: string;
+  country: string;
+  impact: 'high' | 'medium' | 'low';
+  forecast?: string;
+  previous?: string;
+  actual?: string;
+}
+
+export interface PerformanceMetric {
+  label: string;
+  value: number;
+  change: number;
+  unit: string;
 }
