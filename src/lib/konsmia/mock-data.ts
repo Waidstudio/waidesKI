@@ -1,4 +1,4 @@
-import type { TradeJournalEntry, PortfolioAsset, AlertItem, CorrelationPair, EconomicEvent, PerformanceMetric } from './types';
+import type { TradeJournalEntry, PortfolioAsset, AlertItem, CorrelationPair, EconomicEvent, PerformanceMetric, AssetVaultData, LockRule, SignalMemory } from './types';
 
 export function generateTradeJournal(): TradeJournalEntry[] {
   const assets = ['BTC/USD', 'ETH/USD', 'EUR/USD', 'SOL/USD', 'GBP/USD'];
@@ -19,7 +19,8 @@ export function generateTradeJournal(): TradeJournalEntry[] {
       confidence: Math.abs(pnlPct) > 3 ? 'high' : Math.abs(pnlPct) > 1 ? 'medium' : 'low',
       notes: pnlPct > 0 ? 'Clean entry at support, TP hit' : 'Stopped out on volatility spike',
       tredbeingId: i % 3 === 0 ? `TB-00${(i % 4) + 1}` : undefined,
-    };
+      outcome: pnlPct > 0 ? 'win' : 'loss',
+    } as TradeJournalEntry;
   });
 }
 
@@ -35,11 +36,12 @@ export function generatePortfolio(): PortfolioAsset[] {
 
 export function generateAlerts(): AlertItem[] {
   return [
-    { id: 'A-001', timestamp: new Date().toISOString(), type: 'signal', severity: 'info', title: 'New Signal: BTC/USD Bullish', message: 'Waides KI generated a new bullish signal with high confidence', read: false },
+    { id: 'A-001', timestamp: new Date().toISOString(), type: 'signal', severity: 'info', title: 'New Signal: BTC/USD', message: 'Waides KI generated a new signal — review the verdict panel', read: false },
     { id: 'A-002', timestamp: new Date(Date.now() - 300000).toISOString(), type: 'risk', severity: 'warning', title: 'Risk Budget 72%', message: 'Portfolio exposure approaching Webonyix risk threshold', read: false },
     { id: 'A-003', timestamp: new Date(Date.now() - 900000).toISOString(), type: 'system', severity: 'info', title: 'KonsNet Syncing', message: 'Data pipeline re-synchronizing with KonsNet node cluster', read: true },
     { id: 'A-004', timestamp: new Date(Date.now() - 1800000).toISOString(), type: 'price', severity: 'critical', title: 'ETH/USD Flash Move', message: 'ETH moved 3.2% in 5 minutes — liquidity sweep detected', read: true },
-    { id: 'A-005', timestamp: new Date(Date.now() - 3600000).toISOString(), type: 'signal', severity: 'warning', title: 'Shavoka Blocked Signal', message: 'EUR/USD signal rejected by ethical firewall — sentiment-driven bias detected', read: true },
+    { id: 'A-005', timestamp: new Date(Date.now() - 3600000).toISOString(), type: 'signal', severity: 'warning', title: 'Shavoka Blocked Signal', message: 'EUR/USD signal rejected by ethical firewall', read: true },
+    { id: 'A-006', timestamp: new Date(Date.now() - 5400000).toISOString(), type: 'risk', severity: 'critical', title: 'Market Shift Detected', message: 'Rapid sentiment reversal — Waides KI recommends caution', read: false },
   ];
 }
 
@@ -74,5 +76,29 @@ export function generatePerformanceMetrics(): PerformanceMetric[] {
     { label: 'Max Drawdown', value: -8.4, change: -1.2, unit: '%' },
     { label: 'Avg Trade', value: 127, change: 15, unit: 'USD' },
     { label: 'Active Signals', value: 4, change: 1, unit: '' },
+  ];
+}
+
+export function generateAssetVault(): AssetVaultData {
+  return {
+    totalBalance: 67050,
+    lockedFunds: 25000,
+    availableFunds: 42050,
+    growthPercent: 8.4,
+    lockRules: [
+      { id: 'LR-01', name: 'Time Lock', type: 'time_lock', value: 30, active: true, description: 'Funds locked for 30 days minimum' },
+      { id: 'LR-02', name: 'Daily Loss Limit', type: 'loss_limit', value: 500, active: true, description: 'Maximum $500 daily loss allowed' },
+      { id: 'LR-03', name: 'Daily Spending Cap', type: 'daily_cap', value: 2000, active: false, description: 'Maximum $2000 daily trading volume' },
+    ],
+  };
+}
+
+export function generateSignalMemory(): SignalMemory[] {
+  return [
+    { signalId: 'SIG-001', asset: 'BTC/USD', prediction: 'bullish', confidencePercent: 88, timestamp: new Date(Date.now() - 86400000).toISOString(), outcome: 'correct', actualResult: '+2.3% in 24h' },
+    { signalId: 'SIG-002', asset: 'ETH/USD', prediction: 'bearish', confidencePercent: 82, timestamp: new Date(Date.now() - 172800000).toISOString(), outcome: 'correct', actualResult: '-1.8% in 24h' },
+    { signalId: 'SIG-003', asset: 'SOL/USD', prediction: 'bullish', confidencePercent: 76, timestamp: new Date(Date.now() - 259200000).toISOString(), outcome: 'incorrect', actualResult: '-0.5% — weak momentum' },
+    { signalId: 'SIG-004', asset: 'EUR/USD', prediction: 'no_trade', confidencePercent: 45, timestamp: new Date(Date.now() - 345600000).toISOString(), outcome: 'correct', actualResult: 'Market stayed flat' },
+    { signalId: 'SIG-005', asset: 'BTC/USD', prediction: 'bearish', confidencePercent: 91, timestamp: new Date(Date.now() - 432000000).toISOString(), outcome: 'correct', actualResult: '-3.1% in 18h' },
   ];
 }
