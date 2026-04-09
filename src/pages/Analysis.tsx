@@ -1,76 +1,103 @@
 import { useState, useMemo } from 'react';
 import { TerminalCard } from '@/components/TerminalCard';
-import { SignalDetail } from '@/components/SignalDetail';
+import { VerdictPanel } from '@/components/VerdictPanel';
+import { TimePrediction } from '@/components/TimePrediction';
+import { EntryPrecisionCard } from '@/components/EntryPrecisionCard';
+import { LiquidityIntelligence } from '@/components/LiquidityIntelligence';
+import { CorrelationIntelligence } from '@/components/CorrelationIntelligence';
+import { ConfidenceGauge } from '@/components/ConfidenceGauge';
 import { SignalStrengthMeter } from '@/components/SignalStrengthMeter';
-import { CorrelationMatrix } from '@/components/CorrelationMatrix';
-import { LiquidityDepthCard } from '@/components/LiquidityDepthCard';
-import { VolatilityGauge } from '@/components/VolatilityGauge';
 import { SentimentRadar } from '@/components/SentimentRadar';
-import { generateSignal } from '@/lib/konsmia/signal-engine';
-import { generateCorrelations } from '@/lib/konsmia/mock-data';
-import type { WaidesSignal } from '@/lib/konsmia/types';
+import { NoTradePanel } from '@/components/NoTradePanel';
+import { generateSignal, getConfidenceThreshold } from '@/lib/konsmia/signal-engine';
+import type { WaidesSignal, KIMode } from '@/lib/konsmia/types';
 
 export default function Analysis() {
   const [selectedAsset, setSelectedAsset] = useState('BTC/USD');
+  const [mode, setMode] = useState<KIMode>('balanced');
   const assets = ['BTC/USD', 'ETH/USD', 'EUR/USD', 'SOL/USD', 'GBP/USD'];
 
-  const signal = useMemo(() => generateSignal(selectedAsset), [selectedAsset]);
-  const correlations = useMemo(() => generateCorrelations(), []);
+  const signal = useMemo(() => generateSignal(selectedAsset, mode), [selectedAsset, mode]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">Deep Analysis</h1>
-        <p className="text-xs text-muted-foreground font-mono">Multi-layer intelligence breakdown</p>
+        <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">KI Analysis</h1>
+        <p className="text-xs text-muted-foreground font-mono">Full multi-layer intelligence engine • Confidence threshold: {getConfidenceThreshold(mode)}%</p>
       </div>
 
-      {/* Asset selector */}
-      <div className="flex flex-wrap gap-2">
-        {assets.map(a => (
-          <button
-            key={a}
-            onClick={() => setSelectedAsset(a)}
-            className={`px-3 py-1.5 rounded text-xs font-mono border transition-colors ${
-              selectedAsset === a ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {a}
-          </button>
-        ))}
+      {/* Controls */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-wrap gap-2">
+          {assets.map(a => (
+            <button
+              key={a}
+              onClick={() => setSelectedAsset(a)}
+              className={`px-3 py-1.5 rounded text-xs font-mono border transition-colors ${
+                selectedAsset === a ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {a}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          {(['conservative', 'balanced', 'aggressive'] as KIMode[]).map(m => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`px-3 py-1.5 rounded text-[10px] font-mono border transition-colors capitalize ${
+                mode === m ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
       </div>
 
       {signal ? (
         <>
-          {/* Signal Overview */}
-          <TerminalCard title={`ANALYSIS: ${selectedAsset}`} subtitle="Full Multi-Layer Breakdown">
-            <SignalDetail signal={signal} />
-          </TerminalCard>
+          {/* Verdict or No Trade */}
+          {signal.bias === 'no_trade' ? (
+            <NoTradePanel signal={signal} />
+          ) : (
+            <TerminalCard title={`KI VERDICT: ${selectedAsset}`} subtitle={`${signal.confidencePercent}% confidence • ${mode} mode`}>
+              <VerdictPanel verdict={signal.verdict} />
+            </TerminalCard>
+          )}
 
-          {/* Detailed Metrics */}
+          {/* Time + Entry */}
+          {signal.bias !== 'no_trade' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {signal.timeWindow && (
+                <TerminalCard title="TIME PREDICTION" subtitle="Breakout timing analysis">
+                  <TimePrediction timeWindow={signal.timeWindow} />
+                </TerminalCard>
+              )}
+              {signal.entryPrecision && (
+                <TerminalCard title="ENTRY PRECISION" subtitle="Optimal entry parameters">
+                  <EntryPrecisionCard entry={signal.entryPrecision} bias={signal.bias} />
+                </TerminalCard>
+              )}
+            </div>
+          )}
+
+          {/* Confidence + Signal Strength */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TerminalCard title="SIGNAL STRENGTH METER">
-              <SignalStrengthMeter score={signal.overallScore} label="Overall Score" />
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <SignalStrengthMeter score={signal.macro.score} label="Macro" />
-                <SignalStrengthMeter score={signal.micro.score} label="Micro" />
-                <SignalStrengthMeter score={signal.psychological.score} label="Psych" />
-                <SignalStrengthMeter score={signal.temporal.score} label="Temporal" />
-              </div>
+            <TerminalCard title="CONFIDENCE ANALYSIS">
+              <ConfidenceGauge
+                score={signal.confidencePercent}
+                layers={[
+                  { name: 'Macro', score: signal.macro.score },
+                  { name: 'Micro', score: signal.micro.score },
+                  { name: 'Psych', score: signal.psychological.score },
+                  { name: 'Time', score: signal.temporal.score },
+                  { name: 'Liq', score: signal.liquidity.score },
+                  { name: 'Corr', score: signal.correlation.score },
+                ]}
+              />
             </TerminalCard>
-
-            <TerminalCard title="LIQUIDITY DEPTH" subtitle={selectedAsset}>
-              <LiquidityDepthCard asset={selectedAsset} />
-            </TerminalCard>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TerminalCard title="VOLATILITY ANALYSIS">
-              <div className="flex flex-col items-center gap-4">
-                <VolatilityGauge value={Math.abs(signal.overallScore)} label="Signal Volatility" />
-                <VolatilityGauge value={signal.psychological.fearGreedIndex} label="Fear/Greed" />
-              </div>
-            </TerminalCard>
-
             <TerminalCard title="SENTIMENT BREAKDOWN">
               <SentimentRadar
                 fearGreed={signal.psychological.fearGreedIndex}
@@ -81,30 +108,32 @@ export default function Analysis() {
             </TerminalCard>
           </div>
 
-          <TerminalCard title="CORRELATION MATRIX" subtitle="Cross-asset relationships">
-            <CorrelationMatrix pairs={correlations} />
-          </TerminalCard>
+          {/* Liquidity + Correlation Intelligence */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TerminalCard title="LIQUIDITY INTELLIGENCE">
+              <LiquidityIntelligence liquidity={signal.liquidity} />
+            </TerminalCard>
+            <TerminalCard title="CORRELATION INTELLIGENCE">
+              <CorrelationIntelligence correlation={signal.correlation} />
+            </TerminalCard>
+          </div>
 
-          {/* Inner Analysis Sections */}
+          {/* Deep Dive Layers */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <TerminalCard title="MACRO DEEP DIVE">
               <div className="space-y-3 text-xs text-muted-foreground">
-                <div className="bg-secondary/20 rounded p-3">
-                  <p className="font-semibold text-foreground mb-1">Global Trend</p>
-                  <p>{signal.macro.globalTrend}</p>
-                </div>
-                <div className="bg-secondary/20 rounded p-3">
-                  <p className="font-semibold text-foreground mb-1">Interest Rates</p>
-                  <p>{signal.macro.interestRates}</p>
-                </div>
-                <div className="bg-secondary/20 rounded p-3">
-                  <p className="font-semibold text-foreground mb-1">Inflation</p>
-                  <p>{signal.macro.inflation}</p>
-                </div>
-                <div className="bg-secondary/20 rounded p-3">
-                  <p className="font-semibold text-foreground mb-1">Geopolitics</p>
-                  <p>{signal.macro.geopolitics}</p>
-                </div>
+                {[
+                  { label: 'Global Trend', value: signal.macro.globalTrend },
+                  { label: 'Interest Rates', value: signal.macro.interestRates },
+                  { label: 'Inflation', value: signal.macro.inflation },
+                  { label: 'Geopolitics', value: signal.macro.geopolitics },
+                  { label: 'Institutional', value: signal.macro.institutionalBehavior },
+                ].map(item => (
+                  <div key={item.label} className="bg-secondary/20 rounded p-3">
+                    <p className="font-semibold text-foreground mb-1">{item.label}</p>
+                    <p>{item.value}</p>
+                  </div>
+                ))}
               </div>
             </TerminalCard>
 
@@ -115,24 +144,44 @@ export default function Analysis() {
                   <p>{signal.micro.priceAction}</p>
                 </div>
                 <div className="bg-secondary/20 rounded p-3">
+                  <p className="font-semibold text-foreground mb-1">Market Structure</p>
+                  <p>{signal.micro.marketStructure}</p>
+                </div>
+                <div className="bg-secondary/20 rounded p-3">
                   <p className="font-semibold text-foreground mb-1">Order Flow</p>
                   <p>{signal.micro.orderFlow}</p>
                 </div>
                 <div className="bg-secondary/20 rounded p-3">
-                  <p className="font-semibold text-foreground mb-1">Key Support</p>
-                  <p>{signal.micro.keyLevels.support.map(s => s.toFixed(2)).join(', ')}</p>
-                </div>
-                <div className="bg-secondary/20 rounded p-3">
-                  <p className="font-semibold text-foreground mb-1">Key Resistance</p>
-                  <p>{signal.micro.keyLevels.resistance.map(r => r.toFixed(2)).join(', ')}</p>
+                  <p className="font-semibold text-foreground mb-1">Key Levels</p>
+                  <p>Support: {signal.micro.keyLevels.support.map(s => s.toFixed(2)).join(', ')}</p>
+                  <p>Resistance: {signal.micro.keyLevels.resistance.map(r => r.toFixed(2)).join(', ')}</p>
                 </div>
               </div>
             </TerminalCard>
           </div>
+
+          {/* MTF Alignment */}
+          <TerminalCard title="MULTI-TIMEFRAME CONFIRMATION">
+            <div className={`rounded-lg p-4 border text-center ${signal.multiTimeframeAligned ? 'border-success/30 bg-success/5' : 'border-danger/30 bg-danger/5'}`}>
+              <p className={`font-mono text-sm font-bold ${signal.multiTimeframeAligned ? 'text-success' : 'text-danger'}`}>
+                {signal.multiTimeframeAligned ? '✓ ALL TIMEFRAMES ALIGNED' : '✗ TIMEFRAME CONFLICT DETECTED'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {signal.multiTimeframeAligned
+                  ? 'Micro, Temporal, and Liquidity layers are pointing in the same direction.'
+                  : 'Warning: Micro, Temporal, and Liquidity layers show conflicting signals. Trade with extreme caution or avoid.'
+                }
+              </p>
+            </div>
+          </TerminalCard>
         </>
       ) : (
-        <TerminalCard title="NO SIGNAL">
-          <p className="text-sm text-muted-foreground">Shavoka KI blocked this signal for ethical reasons.</p>
+        <TerminalCard title="SHAVOKA FILTER">
+          <div className="text-center py-8">
+            <p className="text-2xl mb-2">🛡️</p>
+            <p className="text-sm text-foreground font-semibold">Signal Blocked by Ethical Firewall</p>
+            <p className="text-xs text-muted-foreground mt-1">Shavoka KI determined this asset's conditions carry unacceptable risk patterns.</p>
+          </div>
         </TerminalCard>
       )}
     </div>
