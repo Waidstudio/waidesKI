@@ -1,4 +1,4 @@
-import { Zap, BarChart3, TrendingUp, Briefcase, Network, Settings as SettingsIcon, Home, Menu } from 'lucide-react';
+import { Zap, BarChart3, TrendingUp, Briefcase, Network, Settings as SettingsIcon, Home, MessageCircle } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import {
@@ -16,12 +16,13 @@ import {
 import { StatusDot } from '@/components/StatusDot';
 
 const mainItems = [
-  { title: 'Dashboard', url: '/dashboard', icon: Home },
-  { title: 'Analysis', url: '/analysis', icon: BarChart3 },
-  { title: 'Markets', url: '/markets', icon: TrendingUp },
-  { title: 'Portfolio', url: '/portfolio', icon: Briefcase },
+  { title: 'Command Center', url: '/dashboard', icon: Home },
+  { title: 'KI Analysis', url: '/analysis', icon: BarChart3 },
+  { title: 'Market Pulse', url: '/markets', icon: TrendingUp },
+  { title: 'Portfolio & Vault', url: '/portfolio', icon: Briefcase },
+  { title: 'Speak with KI', url: '/chat', icon: MessageCircle },
   { title: 'Konsmia', url: '/konsmia', icon: Network },
-  { title: 'Settings', url: '/settings', icon: SettingsIcon },
+  { title: 'System Core', url: '/settings', icon: SettingsIcon },
 ];
 
 export function AppSidebar() {

@@ -11,6 +11,7 @@ import Markets from "./pages/Markets.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import Konsmia from "./pages/Konsmia.tsx";
 import Settings from "./pages/Settings.tsx";
+import Chat from "./pages/Chat.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/analysis" element={<Analysis />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="/konsmia" element={<Konsmia />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

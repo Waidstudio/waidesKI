@@ -4,6 +4,7 @@ export type MarketBias = 'bullish' | 'bearish' | 'neutral' | 'no_trade';
 export type Confidence = 'high' | 'medium' | 'low';
 export type SessionType = 'london' | 'new_york' | 'asia' | 'overlap';
 export type Sentiment = 'extreme_fear' | 'fear' | 'neutral' | 'greed' | 'extreme_greed';
+export type KIMode = 'conservative' | 'balanced' | 'aggressive';
 
 export interface MacroAnalysis {
   globalTrend: string;
@@ -19,6 +20,7 @@ export interface MicroAnalysis {
   liquidityZones: string[];
   orderFlow: string;
   keyLevels: { support: number[]; resistance: number[] };
+  marketStructure: string;
   score: number;
 }
 
@@ -39,21 +41,69 @@ export interface TemporalAnalysis {
   score: number;
 }
 
+export interface LiquidityAnalysis {
+  stopHuntZones: string[];
+  liquidityPools: string[];
+  trapZones: string[];
+  liquidityScore: number;
+  score: number;
+}
+
+export interface CorrelationAnalysis {
+  pairs: { assetA: string; assetB: string; correlation: number; interpretation: string }[];
+  crossAssetBehavior: string;
+  score: number;
+}
+
+export interface TimeWindow {
+  startTime: string;
+  endTime: string;
+  expectedDuration: string;
+  breakoutTime: string;
+  timingStrength: 'weak' | 'moderate' | 'strong';
+}
+
+export interface EntryPrecision {
+  entryZone: [number, number];
+  invalidationLevel: number;
+  confirmationTrigger: string;
+}
+
+export interface KIVerdict {
+  direction: MarketBias;
+  confidencePercent: number;
+  action: 'buy' | 'sell' | 'wait' | 'no_trade';
+  riskLevel: 'low' | 'medium' | 'high';
+  signalStrength: number;
+  reasoning: string;
+  soulVoice: string;
+  confluenceSummary: string;
+  noTradeReason?: string;
+  noTradeMissing?: string[];
+}
+
 export interface WaidesSignal {
   id: string;
   timestamp: string;
   asset: string;
   bias: MarketBias;
   confidence: Confidence;
+  confidencePercent: number;
   timeframe: string;
   macro: MacroAnalysis;
   micro: MicroAnalysis;
   psychological: PsychologicalAnalysis;
   temporal: TemporalAnalysis;
+  liquidity: LiquidityAnalysis;
+  correlation: CorrelationAnalysis;
   overallScore: number;
   reasoning: string;
   ethicalAlignment: boolean;
   shavokaApproved: boolean;
+  verdict: KIVerdict;
+  timeWindow?: TimeWindow;
+  entryPrecision?: EntryPrecision;
+  multiTimeframeAligned: boolean;
 }
 
 export interface Tredbeing {
@@ -86,6 +136,7 @@ export interface MarketData {
   low24h: number;
   marketCap?: number;
   sparkline?: number[];
+  kiTag?: 'watching' | 'high_opportunity' | 'avoid' | null;
 }
 
 export interface NiuzArticle {
@@ -97,8 +148,6 @@ export interface NiuzArticle {
   asset?: string;
   bias?: MarketBias;
 }
-
-// New types for expanded features
 
 export interface TradeJournalEntry {
   id: string;
@@ -112,6 +161,7 @@ export interface TradeJournalEntry {
   confidence: Confidence;
   notes: string;
   tredbeingId?: string;
+  outcome?: 'win' | 'loss' | 'pending';
 }
 
 export interface PortfolioAsset {
@@ -155,4 +205,40 @@ export interface PerformanceMetric {
   value: number;
   change: number;
   unit: string;
+}
+
+export interface AssetVaultData {
+  totalBalance: number;
+  lockedFunds: number;
+  availableFunds: number;
+  growthPercent: number;
+  lockRules: LockRule[];
+}
+
+export interface LockRule {
+  id: string;
+  name: string;
+  type: 'time_lock' | 'loss_limit' | 'daily_cap';
+  value: number;
+  active: boolean;
+  description: string;
+}
+
+export interface SignalMemory {
+  signalId: string;
+  asset: string;
+  prediction: MarketBias;
+  confidencePercent: number;
+  timestamp: string;
+  outcome?: 'correct' | 'incorrect' | 'pending';
+  userFeedback?: string;
+  actualResult?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'ki';
+  content: string;
+  timestamp: string;
+  signal?: WaidesSignal;
 }
