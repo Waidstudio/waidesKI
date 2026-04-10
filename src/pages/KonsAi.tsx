@@ -4,6 +4,7 @@ import { KonsAiPanel } from '@/components/KonsAiPanel';
 import { KonsmiaMap } from '@/components/KonsmiaMap';
 import { KonsmikLink } from '@/components/KonsmikLink';
 import { generateSignal } from '@/lib/konsmia/signal-engine';
+import { allModules } from '@/lib/konsmia/modules';
 import type { KIMode } from '@/lib/konsmia/types';
 
 export default function KonsAiPage() {
@@ -31,7 +32,7 @@ export default function KonsAiPage() {
 
         <div className="space-y-4">
           <TerminalCard title="KONSMIA SYSTEM MAP" subtitle="Module integrity">
-            <KonsmiaMap />
+            <KonsmiaMap modules={allModules} />
           </TerminalCard>
 
           <TerminalCard title="KONSMIK CIVILIZATION" subtitle="Ecosystem connection">
