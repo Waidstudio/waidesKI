@@ -12,6 +12,11 @@ import Portfolio from "./pages/Portfolio.tsx";
 import Konsmia from "./pages/Konsmia.tsx";
 import Settings from "./pages/Settings.tsx";
 import Chat from "./pages/Chat.tsx";
+import Signals from "./pages/Signals.tsx";
+import Predictions from "./pages/Predictions.tsx";
+import Journal from "./pages/Journal.tsx";
+import UserProfile from "./pages/UserProfile.tsx";
+import KonsAi from "./pages/KonsAi.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -27,9 +32,14 @@ const App = () => (
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/analysis" element={<Analysis />} />
+            <Route path="/signals" element={<Signals />} />
+            <Route path="/predictions" element={<Predictions />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/journal" element={<Journal />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/konsai" element={<KonsAi />} />
             <Route path="/konsmia" element={<Konsmia />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
