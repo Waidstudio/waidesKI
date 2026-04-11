@@ -9,21 +9,36 @@ import { ConfidenceGauge } from '@/components/ConfidenceGauge';
 import { SignalStrengthMeter } from '@/components/SignalStrengthMeter';
 import { SentimentRadar } from '@/components/SentimentRadar';
 import { NoTradePanel } from '@/components/NoTradePanel';
-import { generateSignal, getConfidenceThreshold } from '@/lib/konsmia/signal-engine';
-import type { WaidesSignal, KIMode } from '@/lib/konsmia/types';
+import { DataFreshness } from '@/components/DataFreshness';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { useSignals } from '@/hooks/useSignals';
+import { getConfidenceThreshold } from '@/lib/konsmia/signal-engine';
+import type { KIMode } from '@/lib/konsmia/types';
 
 export default function Analysis() {
   const [selectedAsset, setSelectedAsset] = useState('BTC/USD');
   const [mode, setMode] = useState<KIMode>('balanced');
   const assets = ['BTC/USD', 'ETH/USD', 'EUR/USD', 'SOL/USD', 'GBP/USD'];
 
-  const signal = useMemo(() => generateSignal(selectedAsset, mode), [selectedAsset, mode]);
+  const { signals, loading, lastGenerated, refresh } = useSignals({
+    assets: [selectedAsset],
+    mode,
+    autoRefresh: false,
+  });
+
+  const signal = signals[0] ?? null;
+  const dataAge = Date.now() - lastGenerated.getTime();
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">KI Analysis</h1>
-        <p className="text-xs text-muted-foreground font-mono">Full multi-layer intelligence engine • Confidence threshold: {getConfidenceThreshold(mode)}%</p>
+    <div className="space-y-4 sm:space-y-6 pb-16 sm:pb-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">KI Analysis</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-mono">Confidence threshold: {getConfidenceThreshold(mode)}%</span>
+            <DataFreshness ageMs={dataAge} isStale={dataAge > 120000} />
+          </div>
+        </div>
       </div>
 
       {/* Controls */}
@@ -56,9 +71,16 @@ export default function Analysis() {
         </div>
       </div>
 
-      {signal ? (
+      {loading ? (
+        <div className="space-y-4">
+          <LoadingSkeleton variant="card" lines={6} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <LoadingSkeleton variant="card" lines={4} />
+            <LoadingSkeleton variant="card" lines={4} />
+          </div>
+        </div>
+      ) : signal ? (
         <>
-          {/* Verdict or No Trade */}
           {signal.bias === 'no_trade' ? (
             <NoTradePanel signal={signal} />
           ) : (
@@ -67,7 +89,6 @@ export default function Analysis() {
             </TerminalCard>
           )}
 
-          {/* Time + Entry */}
           {signal.bias !== 'no_trade' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {signal.timeWindow && (
@@ -85,7 +106,18 @@ export default function Analysis() {
 
           {/* Confidence + Signal Strength */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TerminalCard title="CONFIDENCE ANALYSIS">
+            <TerminalCard title="CONFIDENCE ANALYSIS"
+              headerRight={
+                <div className="flex items-center gap-1.5">
+                  <div className={`h-2 w-16 rounded-full bg-muted overflow-hidden`}>
+                    <div
+                      className={`h-full rounded-full transition-all ${signal.confidencePercent >= getConfidenceThreshold(mode) ? 'bg-success' : 'bg-warning'}`}
+                      style={{ width: `${signal.confidencePercent}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-[10px] text-muted-foreground">{signal.confidencePercent}% / {getConfidenceThreshold(mode)}%</span>
+                </div>
+              }>
               <ConfidenceGauge
                 score={signal.confidencePercent}
                 layers={[
@@ -108,7 +140,7 @@ export default function Analysis() {
             </TerminalCard>
           </div>
 
-          {/* Liquidity + Correlation Intelligence */}
+          {/* Liquidity + Correlation */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <TerminalCard title="LIQUIDITY INTELLIGENCE">
               <LiquidityIntelligence liquidity={signal.liquidity} />
@@ -118,7 +150,7 @@ export default function Analysis() {
             </TerminalCard>
           </div>
 
-          {/* Deep Dive Layers */}
+          {/* Deep Dive */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <TerminalCard title="MACRO DEEP DIVE">
               <div className="space-y-3 text-xs text-muted-foreground">
@@ -136,7 +168,6 @@ export default function Analysis() {
                 ))}
               </div>
             </TerminalCard>
-
             <TerminalCard title="MICRO DEEP DIVE">
               <div className="space-y-3 text-xs text-muted-foreground">
                 <div className="bg-secondary/20 rounded p-3">
@@ -169,8 +200,7 @@ export default function Analysis() {
               <p className="text-xs text-muted-foreground mt-1">
                 {signal.multiTimeframeAligned
                   ? 'Micro, Temporal, and Liquidity layers are pointing in the same direction.'
-                  : 'Warning: Micro, Temporal, and Liquidity layers show conflicting signals. Trade with extreme caution or avoid.'
-                }
+                  : 'Warning: layers show conflicting signals. Trade with extreme caution or avoid.'}
               </p>
             </div>
           </TerminalCard>
@@ -180,7 +210,7 @@ export default function Analysis() {
           <div className="text-center py-8">
             <p className="text-2xl mb-2">🛡️</p>
             <p className="text-sm text-foreground font-semibold">Signal Blocked by Ethical Firewall</p>
-            <p className="text-xs text-muted-foreground mt-1">Shavoka KI determined this asset's conditions carry unacceptable risk patterns.</p>
+            <p className="text-xs text-muted-foreground mt-1">Shavoka KI determined conditions carry unacceptable risk patterns.</p>
           </div>
         </TerminalCard>
       )}

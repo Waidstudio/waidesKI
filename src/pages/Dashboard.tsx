@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { TerminalCard } from '@/components/TerminalCard';
 import { KIStatusBar } from '@/components/KIStatusBar';
 import { VerdictPanel } from '@/components/VerdictPanel';
@@ -9,34 +9,22 @@ import { PerformanceCard } from '@/components/PerformanceCard';
 import { MarketHeatmap } from '@/components/MarketHeatmap';
 import { StatusDot } from '@/components/StatusDot';
 import { NoTradePanel } from '@/components/NoTradePanel';
+import { DataFreshness } from '@/components/DataFreshness';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { fetchCryptoData } from '@/lib/konsmia/market-data';
-import { generateSignal } from '@/lib/konsmia/signal-engine';
+import { useMarketData } from '@/hooks/useMarketData';
+import { useSignals } from '@/hooks/useSignals';
 import { generateAlerts, generatePerformanceMetrics } from '@/lib/konsmia/mock-data';
-import type { WaidesSignal, MarketData, KIMode } from '@/lib/konsmia/types';
+import type { KIMode } from '@/lib/konsmia/types';
 
 export default function Dashboard() {
-  const [signals, setSignals] = useState<WaidesSignal[]>([]);
-  const [cryptoData, setCryptoData] = useState<MarketData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [mode] = useState<KIMode>('balanced');
-  const alerts = generateAlerts();
-  const metrics = generatePerformanceMetrics();
+  const { cryptoData, loading: marketLoading, dataAge, isStale, source, refresh: refreshMarkets } = useMarketData();
+  const { signals, loading: signalLoading, refresh: refreshSignals } = useSignals();
+  const alerts = useMemo(() => generateAlerts(), []);
+  const metrics = useMemo(() => generatePerformanceMetrics(), []);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    const crypto = await fetchCryptoData();
-    setCryptoData(crypto);
-    const assets = ['BTC/USD', 'ETH/USD', 'EUR/USD', 'SOL/USD'];
-    const newSignals = assets.map(a => generateSignal(a, mode)).filter(Boolean) as WaidesSignal[];
-    setSignals(newSignals);
-    setLastUpdate(new Date());
-    setLoading(false);
-  }, [mode]);
-
-  useEffect(() => { loadData(); }, [loadData]);
+  const loading = marketLoading || signalLoading;
 
   const globalBias = signals.length > 0
     ? signals.filter(s => s.bias === 'bullish').length > signals.filter(s => s.bias === 'bearish').length ? 'bullish' : signals.filter(s => s.bias === 'bearish').length > 0 ? 'bearish' : 'neutral'
@@ -44,17 +32,24 @@ export default function Dashboard() {
 
   const kiStatus = loading ? 'waiting' : signals.some(s => s.bias !== 'no_trade') ? 'active' : 'observing';
 
+  const handleRefresh = () => {
+    refreshMarkets();
+    refreshSignals();
+  };
+
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6 pb-16 sm:pb-0">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
           <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">Command Center</h1>
-          <p className="text-xs text-muted-foreground font-mono flex items-center gap-1.5">
-            <StatusDot status="online" /> System Online • Last: {lastUpdate.toLocaleTimeString()}
-          </p>
+          <div className="flex items-center gap-2">
+            <StatusDot status="online" />
+            <span className="font-mono text-[10px] text-muted-foreground">System Online</span>
+            <DataFreshness ageMs={dataAge} isStale={isStale} source={source} />
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="font-mono text-[10px] border-border h-7 px-2">
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading} className="font-mono text-[10px] border-border h-7 px-2">
           <RefreshCw className={`h-3 w-3 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
         </Button>
       </div>
@@ -65,6 +60,8 @@ export default function Dashboard() {
         globalBias={globalBias}
         signalsCount={signals.filter(s => s.bias !== 'no_trade').length}
         alertsCount={alerts.filter(a => !a.read).length}
+        dataAge={dataAge}
+        isStale={isStale}
       />
 
       {/* Performance Metrics */}
@@ -76,23 +73,25 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left: Primary Signal */}
         <div className="lg:col-span-2 space-y-4">
-          {signals.length > 0 && signals[0].bias === 'no_trade' ? (
+          {loading ? (
+            <LoadingSkeleton variant="card" lines={5} />
+          ) : signals.length > 0 && signals[0].bias === 'no_trade' ? (
             <NoTradePanel signal={signals[0]} />
           ) : signals.length > 0 ? (
             <TerminalCard title={`KI VERDICT: ${signals[0].asset}`} subtitle="Primary Signal">
               <VerdictPanel verdict={signals[0].verdict} />
             </TerminalCard>
-          ) : !loading ? (
+          ) : (
             <TerminalCard title="SIGNAL ENGINE">
               <p className="text-sm text-muted-foreground">No signals — Shavoka KI filtered for ethical alignment.</p>
             </TerminalCard>
-          ) : null}
+          )}
 
           {/* Additional signals */}
-          {signals.slice(1, 3).map(signal => (
+          {!loading && signals.slice(1, 3).map(signal => (
             <TerminalCard key={signal.id} title={`${signal.asset} — ${signal.bias.toUpperCase()}`} subtitle={`${signal.confidencePercent}% confidence`}>
               <div className="space-y-2">
-                <p className="text-xs text-foreground/90 italic">"{signal.verdict.soulVoice.slice(0, 200)}..."</p>
+                <p className="text-xs text-foreground/90 italic leading-relaxed">"{signal.verdict.soulVoice}"</p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className={`font-mono text-[10px] px-2 py-0.5 rounded ${signal.bias === 'bullish' ? 'bg-success/10 text-success' : signal.bias === 'bearish' ? 'bg-danger/10 text-danger' : 'bg-muted text-muted-foreground'}`}>
                     {signal.verdict.action.toUpperCase()}
@@ -104,9 +103,14 @@ export default function Dashboard() {
             </TerminalCard>
           ))}
 
-          <TerminalCard title="MARKET HEATMAP" subtitle="24h Price Change">
-            <MarketHeatmap data={cryptoData} />
-          </TerminalCard>
+          {loading ? (
+            <LoadingSkeleton variant="chart" />
+          ) : (
+            <TerminalCard title="MARKET HEATMAP" subtitle="24h Price Change"
+              headerRight={<DataFreshness ageMs={dataAge} isStale={isStale} />}>
+              <MarketHeatmap data={cryptoData} />
+            </TerminalCard>
+          )}
         </div>
 
         {/* Right Sidebar */}
@@ -116,7 +120,9 @@ export default function Dashboard() {
           </TerminalCard>
 
           <TerminalCard title="SIGNAL STRENGTH">
-            <SignalStrengthMeter score={signals[0]?.overallScore ?? 0} label="Primary Signal" />
+            {loading ? <LoadingSkeleton variant="gauge" /> : (
+              <SignalStrengthMeter score={signals[0]?.overallScore ?? 0} label="Primary Signal" />
+            )}
           </TerminalCard>
 
           <TerminalCard title="ALERTS">
