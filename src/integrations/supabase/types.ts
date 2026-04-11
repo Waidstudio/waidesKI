@@ -14,7 +14,252 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+          signal_data: Json | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id?: string
+          signal_data?: Json | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+          signal_data?: Json | null
+        }
+        Relationships: []
+      }
+      market_data_cache: {
+        Row: {
+          change_24h: number | null
+          high_24h: number | null
+          id: string
+          low_24h: number | null
+          market_cap: number | null
+          name: string
+          price: number
+          source: string | null
+          sparkline: Json | null
+          symbol: string
+          updated_at: string
+          volume_24h: number | null
+        }
+        Insert: {
+          change_24h?: number | null
+          high_24h?: number | null
+          id?: string
+          low_24h?: number | null
+          market_cap?: number | null
+          name: string
+          price: number
+          source?: string | null
+          sparkline?: Json | null
+          symbol: string
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Update: {
+          change_24h?: number | null
+          high_24h?: number | null
+          id?: string
+          low_24h?: number | null
+          market_cap?: number | null
+          name?: string
+          price?: number
+          source?: string | null
+          sparkline?: Json | null
+          symbol?: string
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Relationships: []
+      }
+      signal_memory: {
+        Row: {
+          actual_result: string | null
+          asset: string
+          confidence_percent: number
+          created_at: string
+          id: string
+          outcome: string | null
+          prediction: string
+          resolved_at: string | null
+          signal_id: string
+          user_feedback: string | null
+        }
+        Insert: {
+          actual_result?: string | null
+          asset: string
+          confidence_percent: number
+          created_at?: string
+          id?: string
+          outcome?: string | null
+          prediction: string
+          resolved_at?: string | null
+          signal_id: string
+          user_feedback?: string | null
+        }
+        Update: {
+          actual_result?: string | null
+          asset?: string
+          confidence_percent?: number
+          created_at?: string
+          id?: string
+          outcome?: string | null
+          prediction?: string
+          resolved_at?: string | null
+          signal_id?: string
+          user_feedback?: string | null
+        }
+        Relationships: []
+      }
+      signals: {
+        Row: {
+          action: string
+          actual_result: string | null
+          asset: string
+          bias: string
+          confidence: string
+          confidence_percent: number
+          confluence_summary: string | null
+          correlation: Json | null
+          created_at: string
+          direction: string
+          entry_precision: Json | null
+          id: string
+          liquidity: Json | null
+          macro: Json | null
+          micro: Json | null
+          multi_timeframe_aligned: boolean | null
+          outcome: string | null
+          overall_score: number
+          psychological: Json | null
+          reasoning: string | null
+          risk_level: string
+          signal_id: string
+          soul_voice: string | null
+          temporal: Json | null
+          time_window: Json | null
+        }
+        Insert: {
+          action: string
+          actual_result?: string | null
+          asset: string
+          bias: string
+          confidence: string
+          confidence_percent: number
+          confluence_summary?: string | null
+          correlation?: Json | null
+          created_at?: string
+          direction: string
+          entry_precision?: Json | null
+          id?: string
+          liquidity?: Json | null
+          macro?: Json | null
+          micro?: Json | null
+          multi_timeframe_aligned?: boolean | null
+          outcome?: string | null
+          overall_score: number
+          psychological?: Json | null
+          reasoning?: string | null
+          risk_level: string
+          signal_id: string
+          soul_voice?: string | null
+          temporal?: Json | null
+          time_window?: Json | null
+        }
+        Update: {
+          action?: string
+          actual_result?: string | null
+          asset?: string
+          bias?: string
+          confidence?: string
+          confidence_percent?: number
+          confluence_summary?: string | null
+          correlation?: Json | null
+          created_at?: string
+          direction?: string
+          entry_precision?: Json | null
+          id?: string
+          liquidity?: Json | null
+          macro?: Json | null
+          micro?: Json | null
+          multi_timeframe_aligned?: boolean | null
+          outcome?: string | null
+          overall_score?: number
+          psychological?: Json | null
+          reasoning?: string | null
+          risk_level?: string
+          signal_id?: string
+          soul_voice?: string | null
+          temporal?: Json | null
+          time_window?: Json | null
+        }
+        Relationships: []
+      }
+      trade_journal: {
+        Row: {
+          asset: string
+          confidence: string | null
+          created_at: string
+          direction: string
+          entry_price: number
+          exit_price: number | null
+          id: string
+          notes: string | null
+          outcome: string | null
+          pnl: number | null
+          pnl_percent: number | null
+          signal_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          asset: string
+          confidence?: string | null
+          created_at?: string
+          direction: string
+          entry_price: number
+          exit_price?: number | null
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          pnl?: number | null
+          pnl_percent?: number | null
+          signal_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          asset?: string
+          confidence?: string | null
+          created_at?: string
+          direction?: string
+          entry_price?: number
+          exit_price?: number | null
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          pnl?: number | null
+          pnl_percent?: number | null
+          signal_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
