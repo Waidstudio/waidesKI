@@ -11,7 +11,7 @@ export default function DashboardLayout() {
   const [health, setHealth] = useState(getSystemHealth());
 
   useEffect(() => {
-    const t = setInterval(() => setHealth(getSystemHealth()), 5000);
+    const t = setInterval(() => setHealth(getSystemHealth()), 30000);
     return () => clearInterval(t);
   }, []);
 
