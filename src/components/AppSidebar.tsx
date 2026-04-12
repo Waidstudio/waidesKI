@@ -1,4 +1,4 @@
-import { Zap, BarChart3, TrendingUp, Briefcase, Network, Settings as SettingsIcon, Home, MessageCircle, Signal, Atom, BookOpen, User, Shield } from 'lucide-react';
+import { Zap, BarChart3, TrendingUp, Briefcase, Network, Settings as SettingsIcon, Home, MessageCircle, Signal, Atom, BookOpen, User, Shield, Sparkles } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import {
@@ -18,6 +18,7 @@ const mainItems = [
   { title: 'Speak with KI', url: '/chat', icon: MessageCircle },
   { title: 'User Intelligence', url: '/profile', icon: User },
   { title: 'KonsAi', url: '/konsai', icon: Shield },
+  { title: 'Smai Chinnikstah', url: '/chinnikstah', icon: Sparkles },
   { title: 'Konsmia', url: '/konsmia', icon: Network },
   { title: 'System Core', url: '/settings', icon: SettingsIcon },
 ];

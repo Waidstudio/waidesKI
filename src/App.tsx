@@ -18,6 +18,7 @@ import Predictions from "./pages/Predictions.tsx";
 import Journal from "./pages/Journal.tsx";
 import UserProfile from "./pages/UserProfile.tsx";
 import KonsAi from "./pages/KonsAi.tsx";
+import SmaiChinnikstah from "./pages/SmaiChinnikstah.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/konsai" element={<KonsAi />} />
               <Route path="/konsmia" element={<Konsmia />} />
+              <Route path="/chinnikstah" element={<SmaiChinnikstah />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
