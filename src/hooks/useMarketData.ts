@@ -66,13 +66,18 @@ export function useMarketData(options: UseMarketDataOptions = {}): MarketDataSta
     return () => clearInterval(intervalRef.current);
   }, [autoRefresh, refreshInterval, refresh]);
 
-  // Age tracker (every second)
+  // Age tracker — only update state when the displayed bucket changes (every 10s)
   useEffect(() => {
     ageIntervalRef.current = setInterval(() => {
       const freshness = getDataFreshness();
-      setDataAge(freshness.ageMs);
-      setIsStale(freshness.isStale);
-    }, 1000);
+      // Only trigger re-render when the 10-second bucket changes or stale status flips
+      setDataAge(prev => {
+        const prevBucket = Math.floor(prev / 10_000);
+        const newBucket = Math.floor(freshness.ageMs / 10_000);
+        return prevBucket !== newBucket ? freshness.ageMs : prev;
+      });
+      setIsStale(prev => prev !== freshness.isStale ? freshness.isStale : prev);
+    }, 5000);
     return () => clearInterval(ageIntervalRef.current);
   }, []);
 
