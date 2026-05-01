@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { TerminalCard } from '@/components/TerminalCard';
@@ -55,8 +56,8 @@ export function ConfluenceMap({ data }: { data: Features['confluence'] }) {
         <div />
         {data.families.map(f => <div key={f} className="font-mono text-[7px] text-muted-foreground text-center truncate">{f.slice(0, 3)}</div>)}
         {data.matrix.map((row, i) => (
-          <>
-            <div key={`l-${i}`} className="font-mono text-[7px] text-muted-foreground truncate text-right pr-1">{data.families[i].slice(0, 3)}</div>
+          <Fragment key={`row-${i}`}>
+            <div className="font-mono text-[7px] text-muted-foreground truncate text-right pr-1">{data.families[i].slice(0, 3)}</div>
             {row.map((v, j) => (
               <div
                 key={`${i}-${j}`}
@@ -67,7 +68,7 @@ export function ConfluenceMap({ data }: { data: Features['confluence'] }) {
                 title={`${data.families[i]} ↔ ${data.families[j]}: ${v}`}
               />
             ))}
-          </>
+          </Fragment>
         ))}
       </div>
     </TerminalCard>
