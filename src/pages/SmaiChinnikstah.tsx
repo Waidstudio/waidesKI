@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { generateChinnikstah, type ChinnikstahComposite, type IndicatorReading, type ChinnikstahDirection } from '@/lib/konsmia/chinnikstah-engine';
+import { getAllAdvancedFeatures } from '@/lib/konsmia/chinnikstah-features';
 import { TerminalCard } from '@/components/TerminalCard';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +10,12 @@ import {
   Clock, Target, Hexagon, Split, Sparkles, Info, BookOpen,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  QuantumCone, ConfluenceMap, SmartMoney, WhalePulse, MTFResonance, PredictiveHeatwave,
+  SentimentPolarity, MarketRegime, LiquidityMagnets, AIRiskScore, PositionSize, TimeToMove,
+  BehavioralTraps, CyclePosition, PatternRecognition, EnergyFlow, CrossAssetContagion,
+  ChinnikstahMemory, AnomalyScanner, VerdictSynthesis,
+} from '@/components/chinnikstah/AdvancedPanels';
 
 const familyIcons: Record<string, any> = {
   trend: TrendingUp, momentum: Activity, volatility: Waves, volume: BarChart3,
@@ -265,17 +272,18 @@ function PhaseIndicator({ phase }: { phase: string }) {
 // ─── Main Page ───
 export default function SmaiChinnikstah() {
   const composite = useMemo(() => generateChinnikstah(), []);
+  const features = useMemo(() => getAllAdvancedFeatures(composite), [composite]);
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-20 sm:pb-0">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">Smai Chinnikstah</h1>
+          <Sparkles className="h-5 w-5 text-primary float-glow" />
+          <h1 className="text-lg sm:text-2xl font-futuristic font-black neon-text text-gradient-primary">Smai Chinnikstah</h1>
         </div>
         <p className="font-mono text-[10px] text-muted-foreground mt-1">
-          The Unified Indicator — {composite.readings.length} families • {composite.readings.reduce((s, r) => s + r.subIndicators.length, 0)} indicators synthesized
+          The Unified Indicator — {composite.readings.length} families • {composite.readings.reduce((s, r) => s + r.subIndicators.length, 0)} indicators • 20 advanced modules
         </p>
       </div>
 
@@ -364,6 +372,43 @@ export default function SmaiChinnikstah() {
           </div>
         </div>
       </TerminalCard>
+
+      {/* ── 20 ADVANCED FEATURES ── */}
+      <div className="pt-4 border-t border-border/40">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="h-4 w-4 text-accent float-glow" />
+          <h2 className="font-futuristic text-sm font-bold text-gradient-accent uppercase tracking-wider">Advanced Intelligence — 20 Next-Gen Modules</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="lg:col-span-2"><VerdictSynthesis data={features.verdict} /></div>
+          <AIRiskScore data={features.risk} />
+
+          <QuantumCone data={features.quantumCone} />
+          <PredictiveHeatwave data={features.heatwave} />
+          <SmartMoney data={features.smartMoney} />
+
+          <MTFResonance data={features.mtf} />
+          <MarketRegime data={features.regime} />
+          <EnergyFlow data={features.energy} />
+
+          <SentimentPolarity data={features.sentiment} />
+          <LiquidityMagnets data={features.magnets} />
+          <WhalePulse data={features.whales} />
+
+          <PatternRecognition data={features.patterns} />
+          <BehavioralTraps data={features.traps} />
+          <AnomalyScanner data={features.anomalies} />
+
+          <CyclePosition data={features.cycle} />
+          <PositionSize data={features.position} />
+          <TimeToMove data={features.timing} />
+
+          <CrossAssetContagion data={features.contagion} />
+          <ChinnikstahMemory data={features.memory} />
+          <div className="lg:col-span-1"><ConfluenceMap data={features.confluence} /></div>
+        </div>
+      </div>
     </div>
   );
 }
