@@ -31,8 +31,8 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
       <SidebarContent>
         <div className="flex items-center gap-2 px-4 py-4 border-b border-border/50">
-          <Zap className="h-4 w-4 text-primary shrink-0" />
-          {!collapsed && <span className="font-mono text-xs font-bold text-foreground tracking-wider">WAIDES KI</span>}
+          <Zap className="h-4 w-4 text-primary shrink-0 float-glow" />
+          {!collapsed && <span className="font-futuristic text-xs font-black text-gradient-primary tracking-widest">WAIDES KI</span>}
           {!collapsed && <StatusDot status="online" className="ml-auto" />}
         </div>
 
