@@ -21,11 +21,11 @@ export default function DashboardLayout() {
         <div className="fixed inset-0 grid-pattern opacity-20 pointer-events-none" />
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
-          <header className="sticky top-0 z-20 h-12 flex items-center border-b border-border/50 bg-background/80 backdrop-blur-sm px-4 gap-3">
+          <header className="sticky top-0 z-20 h-12 flex items-center border-b border-border/50 bg-background/70 backdrop-blur-md px-4 gap-3">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex items-center gap-2 sm:hidden">
-              <Zap className="h-4 w-4 text-primary" />
-              <span className="font-mono text-xs font-bold text-foreground tracking-wider">WAIDES KI</span>
+              <Zap className="h-4 w-4 text-primary float-glow" />
+              <span className="font-futuristic text-xs font-black text-gradient-primary tracking-widest">WAIDES KI</span>
             </div>
             <div className="ml-auto flex items-center gap-3">
               {/* System health indicator */}
