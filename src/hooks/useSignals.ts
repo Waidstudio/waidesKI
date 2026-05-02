@@ -33,11 +33,20 @@ export function useSignals(options: UseSignalsOptions = {}): SignalState {
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const generate = useCallback(() => {
-    setLoading(true);
     const newSignals = assets
       .map(a => generateSignal(a, mode))
       .filter(Boolean) as WaidesSignal[];
-    setSignals(newSignals);
+
+    // Skip state update if signal IDs haven't changed (stable per 5-min bucket)
+    setSignals(prev => {
+      if (
+        prev.length === newSignals.length &&
+        prev.every((s, i) => s.id === newSignals[i].id)
+      ) {
+        return prev;
+      }
+      return newSignals;
+    });
     setLastGenerated(new Date());
     setLoading(false);
 
