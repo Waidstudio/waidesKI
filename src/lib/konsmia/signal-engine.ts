@@ -400,8 +400,10 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
   const timeWindow = generateTimeWindow(temporal, confidencePercent);
   const entryPrecision = generateEntryPrecision(micro, bias);
 
+  // Stable ID per (asset, 5-minute bucket) so React keys don't churn between refreshes
+  const bucket = Math.floor(Date.now() / (5 * 60_000));
   return {
-    id: `SIG-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`,
+    id: `SIG-${asset.replace('/', '')}-${bucket}`,
     timestamp: now.toISOString(),
     asset,
     bias,
