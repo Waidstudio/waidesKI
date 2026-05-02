@@ -6,6 +6,31 @@ import type {
 } from './types';
 import { checkEthicalAlignment, checkGovernance, getDataFlowStatus } from './modules';
 
+// ===== DETERMINISTIC SEEDED RNG =====
+// Returns a stable pseudo-random in [0,1) for a given (asset, layer) within the
+// current 5-minute bucket. This eliminates the "shaking" caused by every
+// regeneration producing brand-new numbers.
+function hash(str: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function bucketSeed(asset: string, layer: string, bucketMinutes = 5): () => number {
+  const bucket = Math.floor(Date.now() / (bucketMinutes * 60_000));
+  return mulberry32(hash(`${asset}|${layer}|${bucket}`));
+}
+
 // ===== SESSION DETECTION (Fixed: consistent with SessionClock) =====
 export function getCurrentSession(): SessionType {
   const h = new Date().getUTCHours();
@@ -26,14 +51,15 @@ export function getSessionVolatilityMultiplier(): number {
 }
 
 // ===== DETERMINISTIC SCORING (based on actual price data when available) =====
-function generateMacro(): MacroAnalysis {
+function generateMacro(asset: string): MacroAnalysis {
   const h = new Date().getUTCHours();
   const session = getCurrentSession();
+  const rnd = bucketSeed(asset, 'macro');
   // Session-aware scoring: London/NY overlap tends positive, Asia tends neutral
   const sessionBias = session === 'overlap' ? 15 : session === 'london' ? 10 : session === 'new_york' ? 5 : -5;
   // Time-of-day oscillation for realism
   const timeOscillation = Math.sin(h / 24 * Math.PI * 2) * 20;
-  const noise = (Math.random() - 0.5) * 30;
+  const noise = (rnd() - 0.5) * 30;
   const score = Math.round(Math.max(-100, Math.min(100, sessionBias + timeOscillation + noise)));
 
   return {
@@ -49,8 +75,9 @@ function generateMacro(): MacroAnalysis {
 function generateMicro(asset: string): MicroAnalysis {
   const basePrice = asset.includes('BTC') ? 67000 : asset.includes('ETH') ? 3500 : asset.includes('SOL') ? 145 : asset.includes('EUR') ? 1.08 : asset.includes('GBP') ? 1.27 : 1.0;
   const volMultiplier = getSessionVolatilityMultiplier();
+  const rnd = bucketSeed(asset, 'micro');
   // Score influenced by session volatility
-  const rawScore = (Math.random() - 0.5) * 100;
+  const rawScore = (rnd() - 0.5) * 100;
   const score = Math.round(rawScore * volMultiplier);
 
   const supportSpread = asset.includes('BTC') ? 0.03 : asset.includes('ETH') ? 0.03 : 0.005;
@@ -67,11 +94,12 @@ function generateMicro(asset: string): MicroAnalysis {
   };
 }
 
-function generatePsychological(): PsychologicalAnalysis {
+function generatePsychological(asset: string): PsychologicalAnalysis {
   const session = getCurrentSession();
+  const rnd = bucketSeed(asset, 'psych');
   // Sentiment shifts with sessions: Asia = fear-leaning, London = neutral, NY = greed-leaning
   const sessionBias = session === 'asia' ? -15 : session === 'new_york' ? 10 : 0;
-  const fearGreedIndex = Math.max(0, Math.min(100, 50 + sessionBias + (Math.random() - 0.5) * 40));
+  const fearGreedIndex = Math.max(0, Math.min(100, 50 + sessionBias + (rnd() - 0.5) * 40));
   const score = Math.round(fearGreedIndex - 50);
 
   const sentiments: Sentiment[] = ['extreme_fear', 'fear', 'neutral', 'greed', 'extreme_greed'];
@@ -88,17 +116,18 @@ function generatePsychological(): PsychologicalAnalysis {
   };
 }
 
-function generateTemporal(): TemporalAnalysis {
+function generateTemporal(asset: string): TemporalAnalysis {
   const session = getCurrentSession();
   const h = new Date().getUTCHours();
+  const rnd = bucketSeed(asset, 'temporal');
   // Score based on actual session activity
   let score: number;
   if (session === 'overlap') {
-    score = Math.round(20 + (Math.random() - 0.3) * 40); // Bias toward directional moves
+    score = Math.round(20 + (rnd() - 0.3) * 40); // Bias toward directional moves
   } else if (session === 'london' || session === 'new_york') {
-    score = Math.round((Math.random() - 0.5) * 60);
+    score = Math.round((rnd() - 0.5) * 60);
   } else {
-    score = Math.round((Math.random() - 0.5) * 30); // Asia: less conviction
+    score = Math.round((rnd() - 0.5) * 30); // Asia: less conviction
   }
 
   const nextSession = session === 'asia' ? '08:00' : session === 'london' ? '13:00' : session === 'overlap' ? '17:00' : '00:00';
@@ -116,7 +145,8 @@ function generateTemporal(): TemporalAnalysis {
 function generateLiquidity(asset: string): LiquidityAnalysis {
   const basePrice = asset.includes('BTC') ? 67000 : asset.includes('ETH') ? 3500 : asset.includes('SOL') ? 145 : 1.08;
   const volMult = getSessionVolatilityMultiplier();
-  const score = Math.round((Math.random() - 0.5) * 80 * volMult);
+  const rnd = bucketSeed(asset, 'liquidity');
+  const score = Math.round((rnd() - 0.5) * 80 * volMult);
 
   return {
     stopHuntZones: [
@@ -135,11 +165,12 @@ function generateLiquidity(asset: string): LiquidityAnalysis {
   };
 }
 
-function generateCorrelationAnalysis(): CorrelationAnalysis {
+function generateCorrelationAnalysis(asset: string): CorrelationAnalysis {
+  const rnd = bucketSeed(asset, 'correlation');
   // More stable correlations — BTC/ETH should always be highly correlated
-  const btcEthCorr = 0.82 + (Math.random() * 0.12);
-  const btcForexCorr = -0.25 + (Math.random() * 0.2);
-  const btcSolCorr = 0.65 + (Math.random() * 0.2);
+  const btcEthCorr = 0.82 + (rnd() * 0.12);
+  const btcForexCorr = -0.25 + (rnd() * 0.2);
+  const btcSolCorr = 0.65 + (rnd() * 0.2);
 
   const avgCorr = (btcEthCorr + Math.abs(btcForexCorr) + btcSolCorr) / 3;
   const score = Math.round((avgCorr - 0.5) * 60);
@@ -309,12 +340,12 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
   const dataFlow = getDataFlowStatus();
   if (!dataFlow.active) return null;
 
-  const macro = generateMacro();
+  const macro = generateMacro(asset);
   const micro = generateMicro(asset);
-  const psychological = generatePsychological();
-  const temporal = generateTemporal();
+  const psychological = generatePsychological(asset);
+  const temporal = generateTemporal(asset);
   const liquidity = generateLiquidity(asset);
-  const correlation = generateCorrelationAnalysis();
+  const correlation = generateCorrelationAnalysis(asset);
 
   const overallScore = calculateWeightedScore(
     macro.score, micro.score, psychological.score,
@@ -369,8 +400,10 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
   const timeWindow = generateTimeWindow(temporal, confidencePercent);
   const entryPrecision = generateEntryPrecision(micro, bias);
 
+  // Stable ID per (asset, 5-minute bucket) so React keys don't churn between refreshes
+  const bucket = Math.floor(Date.now() / (5 * 60_000));
   return {
-    id: `SIG-${Date.now()}-${crypto.randomUUID().slice(0, 6)}`,
+    id: `SIG-${asset.replace('/', '')}-${bucket}`,
     timestamp: now.toISOString(),
     asset,
     bias,

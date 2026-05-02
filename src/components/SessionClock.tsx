@@ -13,14 +13,23 @@ export function SessionClock({ className }: { className?: string }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 5000);
-    return () => clearInterval(t);
+    // Align next tick to the start of the next minute, then update every 30s
+    const msToNextMinute = 60_000 - (Date.now() % 60_000);
+    const timeout = setTimeout(() => {
+      setNow(new Date());
+      const t = setInterval(() => setNow(new Date()), 30_000);
+      (timeout as any)._interval = t;
+    }, msToNextMinute);
+    return () => {
+      clearTimeout(timeout);
+      const t = (timeout as any)._interval;
+      if (t) clearInterval(t);
+    };
   }, []);
 
   const utcH = now.getUTCHours();
   const utcM = now.getUTCMinutes();
-  const utcS = now.getUTCSeconds();
-  const progress = ((utcH * 3600 + utcM * 60 + utcS) / 86400) * 100;
+  const progress = ((utcH * 3600 + utcM * 60) / 86400) * 100;
   const currentSession = getCurrentSession();
 
   return (
@@ -28,7 +37,7 @@ export function SessionClock({ className }: { className?: string }) {
       <div className="flex items-center justify-between">
         <span className="font-mono text-xs text-muted-foreground">UTC</span>
         <span className="font-mono text-lg font-bold text-foreground tabular-nums">
-          {String(utcH).padStart(2, '0')}:{String(utcM).padStart(2, '0')}:{String(utcS).padStart(2, '0')}
+          {String(utcH).padStart(2, '0')}:{String(utcM).padStart(2, '0')}
         </span>
       </div>
       
