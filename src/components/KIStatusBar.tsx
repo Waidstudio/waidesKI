@@ -16,7 +16,19 @@ export function KIStatusBar({ status, globalBias, signalsCount, alertsCount, dat
   const [health, setHealth] = useState(getSystemHealth());
 
   useEffect(() => {
-    const t = setInterval(() => setHealth(getSystemHealth()), 5000);
+    const t = setInterval(() => {
+      const next = getSystemHealth();
+      setHealth(prev => {
+        if (prev.overall === next.overall &&
+            prev.modules.length === next.modules.length &&
+            prev.modules.every((m, i) =>
+              m.status === next.modules[i].status && m.integrity === next.modules[i].integrity
+            )) {
+          return prev;
+        }
+        return next;
+      });
+    }, 30000);
     return () => clearInterval(t);
   }, []);
 
