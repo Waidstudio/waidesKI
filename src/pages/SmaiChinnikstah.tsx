@@ -1,6 +1,12 @@
 import { useState, useMemo } from 'react';
 import { generateChinnikstah, type ChinnikstahComposite, type IndicatorReading, type ChinnikstahDirection } from '@/lib/konsmia/chinnikstah-engine';
-import { getAllAdvancedFeatures } from '@/lib/konsmia/chinnikstah-features';
+import {
+  getAllAdvancedFeatures,
+  liveQuantumCone, liveSmartMoney, liveWhalePulse, liveMtf, liveHeatwave,
+  liveSentiment, liveMagnets, liveRisk, liveTiming, liveTraps,
+  livePatterns, liveEnergy, liveContagion, liveMemory, liveAnomalies,
+  marketRegime, neuralConfluenceMap, optimalPositionSize, cyclePosition, kiVerdictSynthesis,
+} from '@/lib/konsmia/chinnikstah-features';
 import { TerminalCard } from '@/components/TerminalCard';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +22,7 @@ import {
   BehavioralTraps, CyclePosition, PatternRecognition, EnergyFlow, CrossAssetContagion,
   ChinnikstahMemory, AnomalyScanner, VerdictSynthesis,
 } from '@/components/chinnikstah/AdvancedPanels';
+import { ChinnikstahLiveModule } from '@/components/chinnikstah/ChinnikstahLiveModule';
 
 const familyIcons: Record<string, any> = {
   trend: TrendingUp, momentum: Activity, volatility: Waves, volume: BarChart3,
