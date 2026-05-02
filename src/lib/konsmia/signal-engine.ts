@@ -6,6 +6,31 @@ import type {
 } from './types';
 import { checkEthicalAlignment, checkGovernance, getDataFlowStatus } from './modules';
 
+// ===== DETERMINISTIC SEEDED RNG =====
+// Returns a stable pseudo-random in [0,1) for a given (asset, layer) within the
+// current 5-minute bucket. This eliminates the "shaking" caused by every
+// regeneration producing brand-new numbers.
+function hash(str: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function bucketSeed(asset: string, layer: string, bucketMinutes = 5): () => number {
+  const bucket = Math.floor(Date.now() / (bucketMinutes * 60_000));
+  return mulberry32(hash(`${asset}|${layer}|${bucket}`));
+}
+
 // ===== SESSION DETECTION (Fixed: consistent with SessionClock) =====
 export function getCurrentSession(): SessionType {
   const h = new Date().getUTCHours();
