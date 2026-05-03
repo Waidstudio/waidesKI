@@ -13,7 +13,7 @@ import { useMarketData } from '@/hooks/useMarketData';
 import { generateEconomicCalendar } from '@/lib/konsmia/mock-data';
 
 export default function Markets() {
-  const { cryptoData, forexData, loading, dataAge, isStale, source, refresh } = useMarketData({ includeFx: true });
+  const { cryptoData, forexData, stockData, loading, dataAge, isStale, source, refresh } = useMarketData({ includeFx: true, includeStocks: true });
   const calendar = useMemo(() => generateEconomicCalendar(), []);
 
   // Assign KI tags
@@ -63,10 +63,13 @@ export default function Markets() {
               <TerminalCard title="FOREX MARKETS" subtitle="Simulated via KonsNet">
                 <MarketTicker data={forexData} />
               </TerminalCard>
+              <TerminalCard title="STOCKS" subtitle="US equities via KonsNet">
+                <MarketTicker data={stockData} />
+              </TerminalCard>
             </>
           )}
           <TerminalCard title="HEATMAP" subtitle="24h Change">
-            {loading ? <LoadingSkeleton variant="chart" /> : <MarketHeatmap data={[...cryptoData, ...forexData]} />}
+            {loading ? <LoadingSkeleton variant="chart" /> : <MarketHeatmap data={[...cryptoData, ...forexData, ...stockData]} />}
           </TerminalCard>
         </div>
         <div className="space-y-4">
