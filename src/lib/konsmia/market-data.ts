@@ -1,5 +1,6 @@
 import type { MarketData } from './types';
 import { supabase } from '@/integrations/supabase/client';
+import { setLivePrice } from './live-prices';
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
@@ -29,6 +30,8 @@ export async function fetchCryptoData(): Promise<MarketData[]> {
       // Update price state
       mapped.forEach((m: MarketData) => {
         priceState[m.symbol] = { price: m.price, sparkline: m.sparkline ?? [] };
+        setLivePrice(m.symbol, m.price);
+        setLivePrice(`${m.symbol}/USD`, m.price);
       });
       lastFetchTime = now;
       return mapped;
@@ -62,6 +65,8 @@ export async function fetchCryptoData(): Promise<MarketData[]> {
     }));
     mapped.forEach((m: MarketData) => {
       priceState[m.symbol] = { price: m.price, sparkline: m.sparkline ?? [] };
+      setLivePrice(m.symbol, m.price);
+      setLivePrice(`${m.symbol}/USD`, m.price);
     });
     lastFetchTime = now;
     return mapped;
@@ -93,6 +98,8 @@ export function getSimulatedCryptoData(): MarketData[] {
     const sparkline = [...prevSparkline.slice(1), price];
 
     priceState[a.symbol] = { price, sparkline };
+    setLivePrice(a.symbol, price);
+    setLivePrice(`${a.symbol}/USD`, price);
 
     return {
       symbol: a.symbol,
@@ -130,6 +137,7 @@ export function getSimulatedForexData(): MarketData[] {
     const sparkline = [...prevSparkline.slice(1), price];
 
     forexState[p.symbol] = { price, sparkline };
+    setLivePrice(p.symbol, price);
 
     return {
       symbol: p.symbol,
@@ -139,6 +147,44 @@ export function getSimulatedForexData(): MarketData[] {
       volume24h: Math.random() * 1e10,
       high24h: Math.max(price, ...sparkline),
       low24h: Math.min(price, ...sparkline),
+      sparkline,
+    };
+  });
+}
+
+// ===== STOCKS — simulated with continuity =====
+let stockState: Record<string, { price: number; sparkline: number[] }> = {};
+
+export function getSimulatedStockData(): MarketData[] {
+  const stocks = [
+    { symbol: 'AAPL', name: 'Apple Inc.', base: 232.5 },
+    { symbol: 'TSLA', name: 'Tesla', base: 248.7 },
+    { symbol: 'NVDA', name: 'NVIDIA', base: 142.3 },
+    { symbol: 'MSFT', name: 'Microsoft', base: 425.1 },
+    { symbol: 'GOOGL', name: 'Alphabet', base: 175.4 },
+    { symbol: 'AMZN', name: 'Amazon', base: 188.2 },
+    { symbol: 'META', name: 'Meta Platforms', base: 565.0 },
+  ];
+  return stocks.map(s => {
+    const prev = stockState[s.symbol];
+    const basePrice = prev?.price ?? s.base;
+    const drift = (Math.random() - 0.5) * 0.004;
+    const price = basePrice * (1 + drift);
+    const change = prev ? ((price - s.base) / s.base) * 100 : (Math.random() - 0.5) * 2;
+    const prevSparkline = prev?.sparkline ?? Array.from({ length: 24 }, () => s.base);
+    const sparkline = [...prevSparkline.slice(1), price];
+    stockState[s.symbol] = { price, sparkline };
+    setLivePrice(s.symbol, price);
+    setLivePrice(`${s.symbol}/USD`, price);
+    return {
+      symbol: s.symbol,
+      name: s.name,
+      price,
+      change24h: change,
+      volume24h: Math.random() * 5e7,
+      high24h: Math.max(price, ...sparkline),
+      low24h: Math.min(price, ...sparkline),
+      marketCap: price * 1e9,
       sparkline,
     };
   });
