@@ -69,6 +69,23 @@ export interface EntryPrecision {
   confirmationTrigger: string;
 }
 
+export type Timeframe = '3m' | '15m' | '1h' | '4h' | '1d';
+
+export interface TradePlan {
+  timeframe: Timeframe;
+  direction: 'long' | 'short';
+  entry: number;
+  stopLoss: number;
+  takeProfit1: number;
+  takeProfit2: number;
+  riskRewardRatio: number;
+  startTimeUTC: string;       // ISO HH:MM UTC when window opens
+  expectedDuration: string;   // human readable
+  invalidationPrice: number;
+  positionSizingHint: string; // e.g. "Risk 1% of capital"
+  notes: string;
+}
+
 export interface KIVerdict {
   direction: MarketBias;
   confidencePercent: number;
