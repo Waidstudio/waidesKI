@@ -121,6 +121,8 @@ export interface WaidesSignal {
   timeWindow?: TimeWindow;
   entryPrecision?: EntryPrecision;
   multiTimeframeAligned: boolean;
+  tradePlans?: TradePlan[];
+  livePrice?: number;
 }
 
 export interface Tredbeing {
