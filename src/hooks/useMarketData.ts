@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { fetchCryptoData, getSimulatedForexData, getDataFreshness } from '@/lib/konsmia/market-data';
+import { fetchCryptoData, getSimulatedForexData, getSimulatedStockData, getDataFreshness } from '@/lib/konsmia/market-data';
 import type { MarketData } from '@/lib/konsmia/types';
 
 interface UseMarketDataOptions {
   autoRefresh?: boolean;
   refreshInterval?: number; // ms
   includeFx?: boolean;
+  includeStocks?: boolean;
 }
 
 interface MarketDataState {
   cryptoData: MarketData[];
   forexData: MarketData[];
+  stockData: MarketData[];
   loading: boolean;
   lastUpdate: Date;
   dataAge: number; // ms since last fetch
@@ -21,9 +23,10 @@ interface MarketDataState {
 }
 
 export function useMarketData(options: UseMarketDataOptions = {}): MarketDataState {
-  const { autoRefresh = true, refreshInterval = 30_000, includeFx = true } = options;
+  const { autoRefresh = true, refreshInterval = 30_000, includeFx = true, includeStocks = true } = options;
   const [cryptoData, setCryptoData] = useState<MarketData[]>([]);
   const [forexData, setForexData] = useState<MarketData[]>([]);
+  const [stockData, setStockData] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [dataAge, setDataAge] = useState(0);
@@ -42,6 +45,9 @@ export function useMarketData(options: UseMarketDataOptions = {}): MarketDataSta
       if (includeFx) {
         setForexData(getSimulatedForexData());
       }
+      if (includeStocks) {
+        setStockData(getSimulatedStockData());
+      }
       setLastUpdate(new Date());
       const freshness = getDataFreshness();
       setIsStale(freshness.isStale);
@@ -52,7 +58,7 @@ export function useMarketData(options: UseMarketDataOptions = {}): MarketDataSta
     } finally {
       setLoading(false);
     }
-  }, [includeFx]);
+  }, [includeFx, includeStocks]);
 
   // Initial load
   useEffect(() => {
@@ -81,5 +87,5 @@ export function useMarketData(options: UseMarketDataOptions = {}): MarketDataSta
     return () => clearInterval(ageIntervalRef.current);
   }, []);
 
-  return { cryptoData, forexData, loading, lastUpdate, dataAge, isStale, source, error, refresh };
+  return { cryptoData, forexData, stockData, loading, lastUpdate, dataAge, isStale, source, error, refresh };
 }

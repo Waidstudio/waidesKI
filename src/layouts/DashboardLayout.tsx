@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { SmaiPopups } from '@/components/SmaiPopups';
 import { Zap } from 'lucide-react';
 import { StatusDot } from '@/components/StatusDot';
 import { getSystemHealth } from '@/lib/konsmia/modules';
@@ -59,6 +60,7 @@ export default function DashboardLayout() {
           </main>
         </div>
         <MobileBottomNav />
+        <SmaiPopups />
       </div>
     </SidebarProvider>
   );

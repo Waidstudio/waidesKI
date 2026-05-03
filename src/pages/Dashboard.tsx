@@ -11,6 +11,7 @@ import { StatusDot } from '@/components/StatusDot';
 import { NoTradePanel } from '@/components/NoTradePanel';
 import { DataFreshness } from '@/components/DataFreshness';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { TradePlanCard } from '@/components/TradePlanCard';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMarketData } from '@/hooks/useMarketData';
@@ -76,11 +77,25 @@ export default function Dashboard() {
           {loading ? (
             <LoadingSkeleton variant="card" lines={5} />
           ) : signals.length > 0 && signals[0].bias === 'no_trade' ? (
-            <NoTradePanel signal={signals[0]} />
+            <>
+              <NoTradePanel signal={signals[0]} />
+              {signals[0].tradePlans && (
+                <TerminalCard title="IF YOU MUST TRADE" subtitle="Reduced-size contingency plans">
+                  <TradePlanCard plans={signals[0].tradePlans} asset={signals[0].asset} />
+                </TerminalCard>
+              )}
+            </>
           ) : signals.length > 0 ? (
-            <TerminalCard title={`KI VERDICT: ${signals[0].asset}`} subtitle="Primary Signal">
-              <VerdictPanel verdict={signals[0].verdict} />
-            </TerminalCard>
+            <>
+              <TerminalCard title={`KI VERDICT: ${signals[0].asset}`} subtitle="Primary Signal">
+                <VerdictPanel verdict={signals[0].verdict} />
+              </TerminalCard>
+              {signals[0].tradePlans && (
+                <TerminalCard title="EXECUTABLE TRADE PLANS" subtitle="Entry • SL • TP • UTC timing">
+                  <TradePlanCard plans={signals[0].tradePlans} asset={signals[0].asset} />
+                </TerminalCard>
+              )}
+            </>
           ) : (
             <TerminalCard title="SIGNAL ENGINE">
               <p className="text-sm text-muted-foreground">No signals — Shavoka KI filtered for ethical alignment.</p>
