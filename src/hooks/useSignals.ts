@@ -20,7 +20,7 @@ interface SignalState {
 
 export function useSignals(options: UseSignalsOptions = {}): SignalState {
   const {
-    assets = ['BTC/USD', 'ETH/USD', 'EUR/USD', 'SOL/USD'],
+    assets = ['BTC/USD', 'ETH/USD', 'EUR/USD', 'SOL/USD', 'AAPL', 'TSLA', 'NVDA', 'GBP/USD'],
     mode = 'balanced',
     autoRefresh = true,
     refreshInterval = 60_000,
