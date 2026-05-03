@@ -5,6 +5,8 @@ import type {
   Tredbeing, NiuzArticle, Sentiment, SessionType, KIMode,
 } from './types';
 import { checkEthicalAlignment, checkGovernance, getDataFlowStatus } from './modules';
+import { getLivePrice } from './live-prices';
+import { buildTradePlans } from './trade-plan';
 
 // ===== DETERMINISTIC SEEDED RNG =====
 // Returns a stable pseudo-random in [0,1) for a given (asset, layer) within the
@@ -73,7 +75,8 @@ function generateMacro(asset: string): MacroAnalysis {
 }
 
 function generateMicro(asset: string): MicroAnalysis {
-  const basePrice = asset.includes('BTC') ? 67000 : asset.includes('ETH') ? 3500 : asset.includes('SOL') ? 145 : asset.includes('EUR') ? 1.08 : asset.includes('GBP') ? 1.27 : 1.0;
+  const fallback = asset.includes('BTC') ? 67000 : asset.includes('ETH') ? 3500 : asset.includes('SOL') ? 145 : asset.includes('EUR') ? 1.08 : asset.includes('GBP') ? 1.27 : asset.includes('JPY') ? 151.3 : asset.includes('AAPL') ? 230 : asset.includes('TSLA') ? 250 : asset.includes('NVDA') ? 140 : 1.0;
+  const basePrice = getLivePrice(asset) ?? fallback;
   const volMultiplier = getSessionVolatilityMultiplier();
   const rnd = bucketSeed(asset, 'micro');
   // Score influenced by session volatility
@@ -143,7 +146,8 @@ function generateTemporal(asset: string): TemporalAnalysis {
 }
 
 function generateLiquidity(asset: string): LiquidityAnalysis {
-  const basePrice = asset.includes('BTC') ? 67000 : asset.includes('ETH') ? 3500 : asset.includes('SOL') ? 145 : 1.08;
+  const fallback = asset.includes('BTC') ? 67000 : asset.includes('ETH') ? 3500 : asset.includes('SOL') ? 145 : asset.includes('AAPL') ? 230 : asset.includes('TSLA') ? 250 : 1.08;
+  const basePrice = getLivePrice(asset) ?? fallback;
   const volMult = getSessionVolatilityMultiplier();
   const rnd = bucketSeed(asset, 'liquidity');
   const score = Math.round((rnd() - 0.5) * 80 * volMult);
@@ -359,7 +363,9 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
   const threshold = getConfidenceThreshold(mode);
 
   let bias: MarketBias;
-  if (Math.abs(overallScore) < 20 || confidencePercent < threshold || !mtfAligned) {
+  // Lower the bar: we always issue a directional read, but flag confidence.
+  // Only flag no_trade when conditions are truly chaotic (score near 0 AND low confidence).
+  if (Math.abs(overallScore) < 8 && confidencePercent < 50) {
     bias = 'no_trade';
   } else if (overallScore > 0) {
     bias = 'bullish';
@@ -399,6 +405,8 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
   const end = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   const timeWindow = generateTimeWindow(temporal, confidencePercent);
   const entryPrecision = generateEntryPrecision(micro, bias);
+  const livePrice = getLivePrice(asset) ?? micro.keyLevels.support[0] * 1.005;
+  const tradePlans = buildTradePlans(asset, livePrice, micro, overallScore, confidencePercent);
 
   // Stable ID per (asset, 5-minute bucket) so React keys don't churn between refreshes
   const bucket = Math.floor(Date.now() / (5 * 60_000));
@@ -424,6 +432,8 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
     timeWindow,
     entryPrecision,
     multiTimeframeAligned: mtfAligned,
+    tradePlans,
+    livePrice,
   };
 }
 
