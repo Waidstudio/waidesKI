@@ -13,17 +13,15 @@ export function SessionClock({ className }: { className?: string }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
-    // Align next tick to the start of the next minute, then update every 30s
+    let interval: ReturnType<typeof setInterval> | undefined;
     const msToNextMinute = 60_000 - (Date.now() % 60_000);
     const timeout = setTimeout(() => {
       setNow(new Date());
-      const t = setInterval(() => setNow(new Date()), 30_000);
-      (timeout as any)._interval = t;
+      interval = setInterval(() => setNow(new Date()), 30_000);
     }, msToNextMinute);
     return () => {
       clearTimeout(timeout);
-      const t = (timeout as any)._interval;
-      if (t) clearInterval(t);
+      if (interval) clearInterval(interval);
     };
   }, []);
 
