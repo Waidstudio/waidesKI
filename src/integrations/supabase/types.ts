@@ -41,6 +41,83 @@ export type Database = {
         }
         Relationships: []
       }
+      ki_accuracy_log: {
+        Row: {
+          asset: string
+          asset_class: string | null
+          confidence_percent: number
+          id: string
+          outcome: string
+          pnl_percent: number | null
+          predicted_direction: string
+          resolved_at: string
+          signal_id: string | null
+          trade_id: string | null
+        }
+        Insert: {
+          asset: string
+          asset_class?: string | null
+          confidence_percent: number
+          id?: string
+          outcome: string
+          pnl_percent?: number | null
+          predicted_direction: string
+          resolved_at?: string
+          signal_id?: string | null
+          trade_id?: string | null
+        }
+        Update: {
+          asset?: string
+          asset_class?: string | null
+          confidence_percent?: number
+          id?: string
+          outcome?: string
+          pnl_percent?: number | null
+          predicted_direction?: string
+          resolved_at?: string
+          signal_id?: string | null
+          trade_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ki_accuracy_log_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "sandbox_trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ki_brain_memory: {
+        Row: {
+          created_at: string
+          id: string
+          key: string | null
+          kind: string
+          session_id: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key?: string | null
+          kind: string
+          session_id?: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string | null
+          kind?: string
+          session_id?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       market_data_cache: {
         Row: {
           change_24h: number | null
@@ -83,6 +160,87 @@ export type Database = {
           symbol?: string
           updated_at?: string
           volume_24h?: number | null
+        }
+        Relationships: []
+      }
+      sandbox_trades: {
+        Row: {
+          asset: string
+          asset_class: string
+          closed_at: string | null
+          confidence_percent: number | null
+          current_price: number | null
+          direction: string
+          entry_price: number
+          id: string
+          leverage: number
+          mode: string
+          opened_at: string
+          opened_by: string
+          outcome: string | null
+          pnl: number | null
+          pnl_percent: number | null
+          position_size: number
+          reasoning: string | null
+          signal_id: string | null
+          status: string
+          stop_loss: number
+          take_profit_1: number
+          take_profit_2: number | null
+          timeframe: string
+          updated_at: string
+        }
+        Insert: {
+          asset: string
+          asset_class?: string
+          closed_at?: string | null
+          confidence_percent?: number | null
+          current_price?: number | null
+          direction: string
+          entry_price: number
+          id?: string
+          leverage?: number
+          mode?: string
+          opened_at?: string
+          opened_by?: string
+          outcome?: string | null
+          pnl?: number | null
+          pnl_percent?: number | null
+          position_size?: number
+          reasoning?: string | null
+          signal_id?: string | null
+          status?: string
+          stop_loss: number
+          take_profit_1: number
+          take_profit_2?: number | null
+          timeframe?: string
+          updated_at?: string
+        }
+        Update: {
+          asset?: string
+          asset_class?: string
+          closed_at?: string | null
+          confidence_percent?: number | null
+          current_price?: number | null
+          direction?: string
+          entry_price?: number
+          id?: string
+          leverage?: number
+          mode?: string
+          opened_at?: string
+          opened_by?: string
+          outcome?: string | null
+          pnl?: number | null
+          pnl_percent?: number | null
+          position_size?: number
+          reasoning?: string | null
+          signal_id?: string | null
+          status?: string
+          stop_loss?: number
+          take_profit_1?: number
+          take_profit_2?: number | null
+          timeframe?: string
+          updated_at?: string
         }
         Relationships: []
       }
