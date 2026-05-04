@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TerminalCard } from '@/components/TerminalCard';
 import { fetchAccuracyStats, listSandboxTrades, reconcileSandboxTrades } from '@/lib/konsmia/sandbox-engine';
-import { Activity, TrendingUp, TrendingDown, Brain, RefreshCw } from 'lucide-react';
+import { Activity, TrendingUp, Brain, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Sandbox() {
@@ -45,7 +45,7 @@ export default function Sandbox() {
         <StatTile label="Avg PnL" value={`${stats.avgPnl >= 0 ? '+' : ''}${fmt(stats.avgPnl)}%`} accent={stats.avgPnl >= 0 ? 'success' : 'danger'} />
       </div>
 
-      <TerminalCard title="OPEN POSITIONS" icon={Activity}>
+      <TerminalCard title="OPEN POSITIONS">
         {open.length === 0 ? (
           <p className="text-xs text-muted-foreground font-mono py-4 text-center">
             No open paper trades. KI opens new positions when a high-confidence signal appears.
@@ -78,7 +78,7 @@ export default function Sandbox() {
         )}
       </TerminalCard>
 
-      <TerminalCard title="CLOSED HISTORY — KI LEARNING LOG" icon={TrendingUp}>
+      <TerminalCard title="CLOSED HISTORY — KI LEARNING LOG">
         {closed.length === 0 ? (
           <p className="text-xs text-muted-foreground font-mono py-4 text-center">No closed trades yet.</p>
         ) : (
