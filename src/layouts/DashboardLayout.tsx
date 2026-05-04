@@ -7,9 +7,17 @@ import { Zap } from 'lucide-react';
 import { StatusDot } from '@/components/StatusDot';
 import { getSystemHealth } from '@/lib/konsmia/modules';
 import { useEffect, useState } from 'react';
+import { useSignals } from '@/hooks/useSignals';
+import { useSandboxAutoTrader } from '@/hooks/useSandboxAutoTrader';
+import { useMarketData } from '@/hooks/useMarketData';
 
 export default function DashboardLayout() {
   const [health, setHealth] = useState(getSystemHealth());
+  // Keep market data + signals + auto-trader running globally so KI is always
+  // training in the background no matter which page the user is on.
+  useMarketData();
+  const { signals } = useSignals();
+  useSandboxAutoTrader(signals);
 
   useEffect(() => {
     const t = setInterval(() => {

@@ -5,6 +5,8 @@ import { kiRespond } from '@/lib/konsmia/soul-voice';
 import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage, KIMode } from '@/lib/konsmia/types';
 import ReactMarkdown from 'react-markdown';
+import { buildBrainContext, rememberPreference } from '@/lib/konsmia/ki-brain';
+import { useLocation } from 'react-router-dom';
 
 interface Props {
   mode?: KIMode;
@@ -13,6 +15,7 @@ interface Props {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ki-chat`;
 
 export function KIChatInterface({ mode = 'balanced' }: Props) {
+  const location = useLocation();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -81,13 +84,23 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
         .map(m => ({ role: m.role === 'ki' ? 'assistant' : 'user', content: m.content }));
       apiMessages.push({ role: 'user', content: userMessage });
 
+      // Detect simple preference statements and persist them so KI remembers
+      const lower = userMessage.toLowerCase();
+      if (/\b(long[- ]?term|swing|hodl)\b/.test(lower)) rememberPreference('horizon', 'long_term');
+      else if (/\b(spot|short[- ]?term|scalp|day trade)\b/.test(lower)) rememberPreference('horizon', 'short_term');
+      if (/\b(crypto|btc|eth|sol)\b/.test(lower)) rememberPreference('asset_class', 'crypto');
+      else if (/\b(forex|fx|eur\/usd|gbp\/usd)\b/.test(lower)) rememberPreference('asset_class', 'forex');
+      else if (/\b(stock|equit|aapl|tsla|nvda)\b/.test(lower)) rememberPreference('asset_class', 'stock');
+
+      const brain_context = await buildBrainContext(location.pathname).catch(() => null);
+
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, brain_context, current_route: location.pathname }),
         signal: controller.signal,
       });
 
@@ -158,7 +171,7 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
       });
       persistMessage('ki', fallback);
     }
-  }, [mode, persistMessage]);
+  }, [mode, persistMessage, location.pathname]);
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() || isStreaming) return;
