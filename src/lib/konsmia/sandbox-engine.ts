@@ -78,7 +78,7 @@ export async function reconcileSandboxTrades() {
     const sl = Number(t.stop_loss);
     const tp1 = Number(t.take_profit_1);
     const tp2 = t.take_profit_2 ? Number(t.take_profit_2) : null;
-    const dir: 'long' | 'short' = t.direction;
+    const dir: 'long' | 'short' = t.direction === 'short' ? 'short' : 'long';
     const size = Number(t.position_size) || 1000;
     const lev = Number(t.leverage) || 1;
 
