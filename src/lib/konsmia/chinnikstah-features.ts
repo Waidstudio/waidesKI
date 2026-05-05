@@ -18,7 +18,7 @@ function seedFor(c: ChinnikstahComposite, salt: number) {
 
 // 1. Quantum Probability Cone
 export function quantumProbabilityCone(c: ChinnikstahComposite) {
-  const r = rng(seedFor(11));
+  const r = rng(seedFor(c, 11));
   const horizons = [1, 4, 12, 24, 72];
   return horizons.map(h => {
     const drift = (c.unifiedScore / 100) * h * 0.4;
@@ -51,15 +51,15 @@ export function smartMoneyFootprint(c: ChinnikstahComposite) {
 }
 
 // 4. Whale Pulse
-export function whalePulse() {
-  const r = rng(seedFor(4));
+export function whalePulse(c: ChinnikstahComposite) {
+  const r = rng(seedFor(c, 4));
   return { largeOrders: Math.round(r() * 50 + 5), exchangeInflow: +(r() * 4 - 2).toFixed(2), exchangeOutflow: +(r() * 4 - 2).toFixed(2), netFlow: +((r() - 0.5) * 6).toFixed(2) };
 }
 
-// 5. Multi-Timeframe Resonance (1m, 5m, 15m, 1h, 4h, 1d)
+// 5. Multi-Timeframe Resonance (5m, 15m, 1H, 4H, 1D)
 export function multiTimeframeResonance(c: ChinnikstahComposite) {
-  const tfs = ['1m', '5m', '15m', '1h', '4h', '1d'];
-  const r = rng(seedFor(5));
+  const tfs = ['5m', '15m', '1H', '4H', '1D'];
+  const r = rng(seedFor(c, 5));
   return tfs.map(tf => ({
     timeframe: tf,
     score: Math.round(clamp(c.unifiedScore + (r() * 60 - 30), -100, 100)),
@@ -69,7 +69,7 @@ export function multiTimeframeResonance(c: ChinnikstahComposite) {
 
 // 6. Predictive Heatwave (next 6 candles)
 export function predictiveHeatwave(c: ChinnikstahComposite) {
-  const r = rng(seedFor(6));
+  const r = rng(seedFor(c, 6));
   return Array.from({ length: 6 }, (_, i) => {
     const noise = (r() - 0.5) * 40;
     const value = clamp(c.unifiedScore + noise + i * (c.unifiedScore / 20), -100, 100);
@@ -78,8 +78,8 @@ export function predictiveHeatwave(c: ChinnikstahComposite) {
 }
 
 // 7. Sentiment Polarity (multi-source)
-export function sentimentPolarity() {
-  const r = rng(seedFor(7));
+export function sentimentPolarity(c: ChinnikstahComposite) {
+  const r = rng(seedFor(c, 7));
   return [
     { source: 'Twitter / X', score: Math.round((r() * 2 - 1) * 100) },
     { source: 'Reddit', score: Math.round((r() * 2 - 1) * 100) },
@@ -102,7 +102,7 @@ export function marketRegime(c: ChinnikstahComposite): { regime: string; descrip
 
 // 9. Liquidity Magnet Map (where price is being pulled)
 export function liquidityMagnets(c: ChinnikstahComposite) {
-  const r = rng(seedFor(9));
+  const r = rng(seedFor(c, 9));
   return [
     { type: 'Stop Cluster Above', distance: +(r() * 3 + 0.5).toFixed(2), strength: Math.round(r() * 100) },
     { type: 'Stop Cluster Below', distance: -(r() * 3 + 0.5), strength: Math.round(r() * 100) },
@@ -129,14 +129,14 @@ export function optimalPositionSize(c: ChinnikstahComposite) {
 
 // 12. Time-To-Move Forecast
 export function timeToMove(c: ChinnikstahComposite) {
-  const r = rng(seedFor(12));
+  const r = rng(seedFor(c, 12));
   const minutes = Math.round((1 - c.unifiedConfidence / 100) * 240 + r() * 60 + 5);
   return { minutes, label: minutes < 30 ? 'Imminent' : minutes < 90 ? 'Near-term' : minutes < 180 ? 'Building' : 'Distant' };
 }
 
 // 13. Behavioral Trap Detection
-export function behavioralTraps() {
-  const r = rng(seedFor(13));
+export function behavioralTraps(c: ChinnikstahComposite) {
+  const r = rng(seedFor(c, 13));
   const traps = ['Bull Trap', 'Bear Trap', 'FOMO Setup', 'Capitulation', 'Stop Hunt', 'Liquidity Grab'];
   const active = traps.filter(() => r() > 0.7);
   return { detected: active, severity: active.length > 1 ? 'high' : active.length === 1 ? 'medium' : 'low' };
@@ -144,15 +144,15 @@ export function behavioralTraps() {
 
 // 14. Cycle Position (Wyckoff/Elliott)
 export function cyclePosition(c: ChinnikstahComposite) {
-  const r = rng(seedFor(14));
+  const r = rng(seedFor(c, 14));
   const wyckoff = ['Accumulation A', 'Accumulation B', 'Spring', 'Markup', 'Distribution', 'UTAD', 'Markdown'][Math.floor(r() * 7)];
   const elliott = ['Wave 1', 'Wave 2', 'Wave 3', 'Wave 4', 'Wave 5', 'Wave A', 'Wave B', 'Wave C'][Math.floor(r() * 8)];
   return { wyckoff, elliott, alignment: c.harmonyIndex };
 }
 
 // 15. AI Pattern Recognition (chart patterns)
-export function patternRecognition() {
-  const r = rng(seedFor(15));
+export function patternRecognition(c: ChinnikstahComposite) {
+  const r = rng(seedFor(c, 15));
   const patterns = [
     { name: 'Ascending Triangle', conf: Math.round(r() * 100), bias: 'bullish' },
     { name: 'Head & Shoulders', conf: Math.round(r() * 100), bias: 'bearish' },
@@ -172,8 +172,8 @@ export function energyFlowIndex(c: ChinnikstahComposite) {
 }
 
 // 17. Cross-Asset Contagion
-export function crossAssetContagion() {
-  const r = rng(seedFor(17));
+export function crossAssetContagion(c: ChinnikstahComposite) {
+  const r = rng(seedFor(c, 17));
   return [
     { asset: 'BTC', impact: +((r() - 0.5) * 2).toFixed(2) },
     { asset: 'ETH', impact: +((r() - 0.5) * 2).toFixed(2) },
@@ -185,7 +185,7 @@ export function crossAssetContagion() {
 
 // 18. Chinnikstah Memory (recall past similar setups)
 export function chinnikstahMemory(c: ChinnikstahComposite) {
-  const r = rng(seedFor(18));
+  const r = rng(seedFor(c, 18));
   return {
     similarSetups: Math.round(r() * 40 + 5),
     historicalWinRate: Math.round(45 + r() * 40),
@@ -195,8 +195,8 @@ export function chinnikstahMemory(c: ChinnikstahComposite) {
 }
 
 // 19. Anomaly Scanner
-export function anomalyScanner() {
-  const r = rng(seedFor(19));
+export function anomalyScanner(c: ChinnikstahComposite) {
+  const r = rng(seedFor(c, 19));
   const anomalies = [
     { signal: 'Volume Spike', severity: r() > 0.6 ? 'detected' : 'clear' },
     { signal: 'Spread Widening', severity: r() > 0.7 ? 'detected' : 'clear' },
