@@ -163,6 +163,36 @@ export type Database = {
         }
         Relationships: []
       }
+      onyix_ledger: {
+        Row: {
+          accuracy_tier: string
+          action: string
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          meta: Json | null
+        }
+        Insert: {
+          accuracy_tier?: string
+          action: string
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          meta?: Json | null
+        }
+        Update: {
+          accuracy_tier?: string
+          action?: string
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          meta?: Json | null
+        }
+        Relationships: []
+      }
       sandbox_trades: {
         Row: {
           asset: string
@@ -415,6 +445,123 @@ export type Database = {
           signal_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      tredbeing_signals: {
+        Row: {
+          asset: string
+          bias: string
+          confidence_percent: number
+          created_at: string
+          engine: string
+          entry: number | null
+          execution_status: string | null
+          forecast_horizon: string | null
+          historical_accuracy: number | null
+          id: string
+          ki_agreement: string | null
+          konslang_statement: string | null
+          liquidity: string | null
+          market_structure: string | null
+          momentum: string | null
+          outputs: Json | null
+          risk_reward: number | null
+          sandbox_trade_id: string | null
+          signal_id: string | null
+          stop_loss: number | null
+          take_profit: number | null
+          timeframe: string
+          trend: string | null
+          updated_at: string
+          volatility: string | null
+        }
+        Insert: {
+          asset: string
+          bias: string
+          confidence_percent: number
+          created_at?: string
+          engine: string
+          entry?: number | null
+          execution_status?: string | null
+          forecast_horizon?: string | null
+          historical_accuracy?: number | null
+          id?: string
+          ki_agreement?: string | null
+          konslang_statement?: string | null
+          liquidity?: string | null
+          market_structure?: string | null
+          momentum?: string | null
+          outputs?: Json | null
+          risk_reward?: number | null
+          sandbox_trade_id?: string | null
+          signal_id?: string | null
+          stop_loss?: number | null
+          take_profit?: number | null
+          timeframe: string
+          trend?: string | null
+          updated_at?: string
+          volatility?: string | null
+        }
+        Update: {
+          asset?: string
+          bias?: string
+          confidence_percent?: number
+          created_at?: string
+          engine?: string
+          entry?: number | null
+          execution_status?: string | null
+          forecast_horizon?: string | null
+          historical_accuracy?: number | null
+          id?: string
+          ki_agreement?: string | null
+          konslang_statement?: string | null
+          liquidity?: string | null
+          market_structure?: string | null
+          momentum?: string | null
+          outputs?: Json | null
+          risk_reward?: number | null
+          sandbox_trade_id?: string | null
+          signal_id?: string | null
+          stop_loss?: number | null
+          take_profit?: number | null
+          timeframe?: string
+          trend?: string | null
+          updated_at?: string
+          volatility?: string | null
+        }
+        Relationships: []
+      }
+      womb_layer: {
+        Row: {
+          asset: string | null
+          created_at: string
+          engine: string | null
+          id: string
+          layer: string
+          payload: Json
+          ref_id: string | null
+          timeframe: string | null
+        }
+        Insert: {
+          asset?: string | null
+          created_at?: string
+          engine?: string | null
+          id?: string
+          layer: string
+          payload: Json
+          ref_id?: string | null
+          timeframe?: string | null
+        }
+        Update: {
+          asset?: string | null
+          created_at?: string
+          engine?: string | null
+          id?: string
+          layer?: string
+          payload?: Json
+          ref_id?: string | null
+          timeframe?: string | null
         }
         Relationships: []
       }

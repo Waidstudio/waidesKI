@@ -20,6 +20,7 @@ import UserProfile from "./pages/UserProfile.tsx";
 import KonsAi from "./pages/KonsAi.tsx";
 import SmaiChinnikstah from "./pages/SmaiChinnikstah.tsx";
 import Sandbox from "./pages/Sandbox.tsx";
+import Tredbeings from "./pages/Tredbeings.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/konsmia" element={<Konsmia />} />
               <Route path="/chinnikstah" element={<SmaiChinnikstah />} />
               <Route path="/sandbox" element={<Sandbox />} />
+              <Route path="/tredbeings" element={<Tredbeings />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
