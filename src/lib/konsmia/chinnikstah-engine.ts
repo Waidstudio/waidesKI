@@ -457,6 +457,8 @@ export function generateChinnikstah(
     generateDivergence(rng),
     generateFractal(rng),
   ];
+  // Onyix fuel — Chinnikstah is the heaviest consumer.
+  import('./onyix').then(m => m.consumeOnyix('chinnikstah_compute', m.depthForTier())).catch(() => {});
 
   // Weighted composite score
   const totalWeight = readings.reduce((s, r) => s + r.weight, 0);
