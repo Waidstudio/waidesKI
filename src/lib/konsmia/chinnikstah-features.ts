@@ -254,154 +254,49 @@ export function getAllAdvancedFeatures(c: ChinnikstahComposite) {
     quantumCone: quantumProbabilityCone(c),
     confluence: neuralConfluenceMap(c),
     smartMoney: smartMoneyFootprint(c),
-    whales: whalePulse(),
+    whales: whalePulse(c),
     mtf: multiTimeframeResonance(c),
     heatwave: predictiveHeatwave(c),
-    sentiment: sentimentPolarity(),
+    sentiment: sentimentPolarity(c),
     regime: marketRegime(c),
     magnets: liquidityMagnets(c),
     risk: aiRiskScore(c),
     position: optimalPositionSize(c),
     timing: timeToMove(c),
-    traps: behavioralTraps(),
+    traps: behavioralTraps(c),
     cycle: cyclePosition(c),
-    patterns: patternRecognition(),
+    patterns: patternRecognition(c),
     energy: energyFlowIndex(c),
-    contagion: crossAssetContagion(),
+    contagion: crossAssetContagion(c),
     memory: chinnikstahMemory(c),
-    anomalies: anomalyScanner(),
+    anomalies: anomalyScanner(c),
     verdict: kiVerdictSynthesis(c),
   };
 }
 
 // ════════════════════════════════════════════════════════════════
-// LIVE VARIANTS — recompute on every call with a fresh seed so the
-// detail dialog actually streams new values every few seconds.
-// The base composite stays bucketed for UI stability, but these
-// helpers add a small live oscillation on top.
+// LIVE VARIANTS — DETERMINISTIC.
+// All readings are tied to the active (asset, timeframe) candle seed.
+// They DO NOT randomise per tick. They only change when:
+//   - the active asset changes
+//   - the active timeframe changes
+//   - a new candle closes
+// This guarantees indicator output is always reproducible from real
+// market context, never from Math.random.
 // ════════════════════════════════════════════════════════════════
 
-function liveRng() {
-  // Mix Date.now() with a Math.random tick for true freshness
-  let s = (Date.now() + Math.floor(Math.random() * 1e9)) % 2147483647;
-  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-}
-function jitter(base: number, range: number) {
-  return clamp(base + (Math.random() - 0.5) * range, -100, 100);
-}
-
-export function liveQuantumCone(c: ChinnikstahComposite) {
-  const horizons = [1, 4, 12, 24, 72];
-  return horizons.map(h => {
-    const drift = (c.unifiedScore / 100) * h * 0.4 + (Math.random() - 0.5) * 0.5;
-    const sigma = (1 + h * 0.6) * (1 - c.unifiedConfidence / 200);
-    return {
-      hours: h,
-      expected: +drift.toFixed(2),
-      upper: +(drift + sigma * 1.96).toFixed(2),
-      lower: +(drift - sigma * 1.96).toFixed(2),
-      prob: clamp(50 + c.unifiedScore * 0.3 - h * 0.4 + (Math.random() - 0.5) * 4, 5, 95),
-    };
-  });
-}
-export function liveSmartMoney(c: ChinnikstahComposite) {
-  const base = smartMoneyFootprint(c);
-  return { ...base, score: Math.round(jitter(base.score, 8)) };
-}
-export function liveWhalePulse() {
-  const r = liveRng();
-  return {
-    largeOrders: Math.round(r() * 50 + 5),
-    exchangeInflow: +(r() * 4 - 2).toFixed(2),
-    exchangeOutflow: +(r() * 4 - 2).toFixed(2),
-    netFlow: +((r() - 0.5) * 6).toFixed(2),
-  };
-}
-export function liveMtf(c: ChinnikstahComposite) {
-  const tfs = ['1m', '5m', '15m', '1h', '4h', '1d'];
-  return tfs.map(tf => {
-    const score = Math.round(clamp(c.unifiedScore + (Math.random() * 60 - 30), -100, 100));
-    return { timeframe: tf, score, bias: score > 0 ? 'bullish' : 'bearish' };
-  });
-}
-export function liveHeatwave(c: ChinnikstahComposite) {
-  return Array.from({ length: 6 }, (_, i) => {
-    const noise = (Math.random() - 0.5) * 40;
-    const value = clamp(c.unifiedScore + noise + i * (c.unifiedScore / 20), -100, 100);
-    return { candle: i + 1, heat: Math.round(value), direction: value > 10 ? 'up' : value < -10 ? 'down' : 'flat' };
-  });
-}
-export function liveSentiment() {
-  const sources = ['Twitter / X', 'Reddit', 'News Headlines', 'Funding Rates', 'On-Chain Mood'];
-  return sources.map(source => ({ source, score: Math.round((Math.random() * 2 - 1) * 100) }));
-}
-export function liveMagnets() {
-  const r = liveRng();
-  return [
-    { type: 'Stop Cluster Above', distance: +(r() * 3 + 0.5).toFixed(2), strength: Math.round(r() * 100) },
-    { type: 'Stop Cluster Below', distance: -(r() * 3 + 0.5), strength: Math.round(r() * 100) },
-    { type: 'Liquidation Pool', distance: +((r() - 0.5) * 6).toFixed(2), strength: Math.round(r() * 100) },
-    { type: 'Order Block', distance: +((r() - 0.5) * 4).toFixed(2), strength: Math.round(r() * 100) },
-  ];
-}
-export function liveRisk(c: ChinnikstahComposite) {
-  const base = aiRiskScore(c);
-  const score = Math.round(clamp(base.score + (Math.random() - 0.5) * 6, 5, 100));
-  const tier = score > 70 ? 'EXTREME' : score > 50 ? 'HIGH' : score > 30 ? 'MODERATE' : 'LOW';
-  return { score, tier };
-}
-export function liveTiming(c: ChinnikstahComposite) {
-  const minutes = Math.round((1 - c.unifiedConfidence / 100) * 240 + Math.random() * 60 + 5);
-  return { minutes, label: minutes < 30 ? 'Imminent' : minutes < 90 ? 'Near-term' : minutes < 180 ? 'Building' : 'Distant' };
-}
-export function liveTraps() {
-  const traps = ['Bull Trap', 'Bear Trap', 'FOMO Setup', 'Capitulation', 'Stop Hunt', 'Liquidity Grab'];
-  const active = traps.filter(() => Math.random() > 0.7);
-  return { detected: active, severity: active.length > 1 ? 'high' : active.length === 1 ? 'medium' : 'low' };
-}
-export function livePatterns() {
-  const all = [
-    { name: 'Ascending Triangle', bias: 'bullish' as const },
-    { name: 'Head & Shoulders', bias: 'bearish' as const },
-    { name: 'Bull Flag', bias: 'bullish' as const },
-    { name: 'Cup & Handle', bias: 'bullish' as const },
-    { name: 'Double Top', bias: 'bearish' as const },
-    { name: 'Falling Wedge', bias: 'bullish' as const },
-    { name: 'Rising Wedge', bias: 'bearish' as const },
-  ];
-  return all
-    .map(p => ({ ...p, conf: Math.round(Math.random() * 100) }))
-    .filter(p => p.conf > 50)
-    .sort((a, b) => b.conf - a.conf)
-    .slice(0, 4);
-}
-export function liveEnergy(c: ChinnikstahComposite) {
-  const base = energyFlowIndex(c);
-  const value = Math.round(jitter(base.value, 10));
-  return { value, polarity: value > 0 ? 'positive' : 'negative', intensity: Math.abs(value) };
-}
-export function liveContagion() {
-  const r = liveRng();
-  return ['BTC', 'ETH', 'DXY', 'GOLD', 'SPX'].map(asset => ({
-    asset,
-    impact: +((r() - 0.5) * 2).toFixed(2),
-  }));
-}
-export function liveMemory(c: ChinnikstahComposite) {
-  const r = liveRng();
-  return {
-    similarSetups: Math.round(r() * 40 + 5),
-    historicalWinRate: Math.round(45 + r() * 40),
-    avgReturn: +((r() * 6 - 2).toFixed(2)),
-    bestMatch: `${Math.round(r() * 30 + 5)} days ago — similar harmony pattern (${c.harmonyIndex}%)`,
-  };
-}
-export function liveAnomalies() {
-  const anomalies = [
-    { signal: 'Volume Spike', severity: Math.random() > 0.6 ? 'detected' : 'clear' },
-    { signal: 'Spread Widening', severity: Math.random() > 0.7 ? 'detected' : 'clear' },
-    { signal: 'Off-Hours Move', severity: Math.random() > 0.8 ? 'detected' : 'clear' },
-    { signal: 'Correlation Break', severity: Math.random() > 0.75 ? 'detected' : 'clear' },
-  ];
-  return { anomalies, total: anomalies.filter(a => a.severity === 'detected').length };
-}
+export const liveQuantumCone = quantumProbabilityCone;
+export const liveSmartMoney  = smartMoneyFootprint;
+export const liveWhalePulse  = whalePulse;
+export const liveMtf         = multiTimeframeResonance;
+export const liveHeatwave    = predictiveHeatwave;
+export const liveSentiment   = sentimentPolarity;
+export const liveMagnets     = liquidityMagnets;
+export const liveRisk        = aiRiskScore;
+export const liveTiming      = timeToMove;
+export const liveTraps       = behavioralTraps;
+export const livePatterns    = patternRecognition;
+export const liveEnergy      = energyFlowIndex;
+export const liveContagion   = crossAssetContagion;
+export const liveMemory      = chinnikstahMemory;
+export const liveAnomalies   = anomalyScanner;
