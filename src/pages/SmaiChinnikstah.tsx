@@ -599,7 +599,7 @@ export default function SmaiChinnikstah() {
             title="Sentiment Polarity"
             subtitle="Crowd reading across 5 sources"
             preview={<SentimentPolarity data={features.sentiment} />}
-            compute={() => liveSentiment()}
+            compute={() => liveSentiment(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 {d.map((s: any) => (
@@ -619,7 +619,7 @@ export default function SmaiChinnikstah() {
             title="Liquidity Magnets"
             subtitle="Where price is being pulled"
             preview={<LiquidityMagnets data={features.magnets} />}
-            compute={() => liveMagnets()}
+            compute={() => liveMagnets(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 {d.map((m: any, i: number) => (
@@ -639,7 +639,7 @@ export default function SmaiChinnikstah() {
             title="Whale Pulse"
             subtitle="Large-order and exchange flow"
             preview={<WhalePulse data={features.whales} />}
-            compute={() => liveWhalePulse()}
+            compute={() => liveWhalePulse(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 <div className="flex justify-between"><span className="text-muted-foreground">Large orders (1h)</span><span>{d.largeOrders}</span></div>
@@ -657,7 +657,7 @@ export default function SmaiChinnikstah() {
             title="AI Pattern Recognition"
             subtitle="High-confidence chart patterns"
             preview={<PatternRecognition data={features.patterns} />}
-            compute={() => livePatterns()}
+            compute={() => livePatterns(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 {d.length === 0 ? <p className="text-muted-foreground">No patterns above 50% confidence right now.</p> :
@@ -679,7 +679,7 @@ export default function SmaiChinnikstah() {
             title="Behavioral Traps"
             subtitle="Active manipulation patterns"
             preview={<BehavioralTraps data={features.traps} />}
-            compute={() => liveTraps()}
+            compute={() => liveTraps(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 <div className="text-foreground">Severity: <span className="font-bold uppercase">{d.severity}</span></div>
@@ -697,7 +697,7 @@ export default function SmaiChinnikstah() {
             title="Anomaly Scanner"
             subtitle="Statistical outliers right now"
             preview={<AnomalyScanner data={features.anomalies} />}
-            compute={() => liveAnomalies()}
+            compute={() => liveAnomalies(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 <div>Total active: <span className="font-bold text-foreground">{d.total}</span></div>
@@ -768,7 +768,7 @@ export default function SmaiChinnikstah() {
             title="Cross-Asset Contagion"
             subtitle="How other markets are pulling this one"
             preview={<CrossAssetContagion data={features.contagion} />}
-            compute={() => liveContagion()}
+            compute={() => liveContagion(composite)}
             renderLive={(d) => (
               <div className="grid grid-cols-5 gap-2 font-mono text-[10px] text-center">
                 {d.map((a: any) => (
