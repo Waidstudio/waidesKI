@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { generateChinnikstah, type ChinnikstahComposite, type IndicatorReading, type ChinnikstahDirection } from '@/lib/konsmia/chinnikstah-engine';
+import { generateChinnikstah, type ChinnikstahComposite, type IndicatorReading, type ChinnikstahDirection, type ChinnikstahTimeframe } from '@/lib/konsmia/chinnikstah-engine';
 import {
   getAllAdvancedFeatures,
   liveQuantumCone, liveSmartMoney, liveWhalePulse, liveMtf, liveHeatwave,
@@ -23,6 +23,11 @@ import {
   ChinnikstahMemory, AnomalyScanner, VerdictSynthesis,
 } from '@/components/chinnikstah/AdvancedPanels';
 import { ChinnikstahLiveModule } from '@/components/chinnikstah/ChinnikstahLiveModule';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+
+const ASSETS = ['BTC/USD','ETH/USD','SOL/USD','EUR/USD','GBP/USD','USD/JPY','XAU/USD','AAPL','TSLA','NVDA'] as const;
+const TIMEFRAMES: ChinnikstahTimeframe[] = ['5m','15m','1H','4H','1D'];
 
 const familyIcons: Record<string, any> = {
   trend: TrendingUp, momentum: Activity, volatility: Waves, volume: BarChart3,
@@ -278,8 +283,14 @@ function PhaseIndicator({ phase }: { phase: string }) {
 
 // ─── Main Page ───
 export default function SmaiChinnikstah() {
-  const composite = useMemo(() => generateChinnikstah(), []);
+  const [asset, setAsset] = useState<string>('BTC/USD');
+  const [timeframe, setTimeframe] = useState<ChinnikstahTimeframe>('1H');
+  // Recomputes when asset OR timeframe changes (and via candle-close seed inside engine)
+  const composite = useMemo(() => generateChinnikstah(asset, timeframe), [asset, timeframe]);
   const features = useMemo(() => getAllAdvancedFeatures(composite), [composite]);
+
+  const stateColor = composite.state === 'trending' ? 'text-success' : composite.state === 'volatile' ? 'text-warning' : 'text-info';
+  const biasColor = composite.bias === 'buy' ? 'text-success' : composite.bias === 'sell' ? 'text-danger' : 'text-muted-foreground';
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-20 sm:pb-0">
@@ -290,9 +301,49 @@ export default function SmaiChinnikstah() {
           <h1 className="text-lg sm:text-2xl font-futuristic font-black neon-text text-gradient-primary">Smai Chinnikstah</h1>
         </div>
         <p className="font-mono text-[10px] text-muted-foreground mt-1">
-          The Unified Indicator — {composite.readings.length} families • {composite.readings.reduce((s, r) => s + r.subIndicators.length, 0)} indicators • 20 advanced modules
+          The Unified Indicator — {composite.readings.length} families • {composite.readings.reduce((s, r) => s + r.subIndicators.length, 0)} indicators • Adaptive KI Core
         </p>
       </div>
+
+      {/* Asset + Timeframe controls + Trust strip */}
+      <TerminalCard title="ACTIVE CONTEXT" subtitle="Asset & timeframe drive every Adaptive KI Core calculation">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[10px] text-muted-foreground uppercase">Asset</span>
+            <Select value={asset} onValueChange={setAsset}>
+              <SelectTrigger className="h-8 w-[130px] font-mono text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ASSETS.map(a => <SelectItem key={a} value={a} className="font-mono text-xs">{a}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[10px] text-muted-foreground uppercase">Timeframe</span>
+            <div className="flex gap-1">
+              {TIMEFRAMES.map(tf => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  className={cn(
+                    'px-2.5 py-1 rounded font-mono text-[11px] border transition-all',
+                    timeframe === tf
+                      ? 'bg-primary/20 border-primary text-primary font-bold'
+                      : 'bg-secondary/20 border-border/40 text-muted-foreground hover:text-foreground'
+                  )}
+                >{tf}</button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
+            <Badge variant="outline" className="font-mono text-[10px]">State: <span className={cn('ml-1 font-bold capitalize', stateColor)}>{composite.state}</span></Badge>
+            <Badge variant="outline" className="font-mono text-[10px]">Bias: <span className={cn('ml-1 font-bold capitalize', biasColor)}>{composite.bias}</span></Badge>
+            <Badge variant="outline" className="font-mono text-[10px]">Confidence: <span className="ml-1 font-bold text-foreground">{composite.unifiedConfidence}%</span></Badge>
+          </div>
+        </div>
+        <p className="font-mono text-[9px] text-muted-foreground mt-2">
+          All indicators recompute on asset / timeframe change and on candle close. Output schema: <span className="text-foreground">{`{ score, bias, confidence, state }`}</span>
+        </p>
+      </TerminalCard>
 
       {/* Main Gauge + Meta */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -385,11 +436,11 @@ export default function SmaiChinnikstah() {
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="h-4 w-4 text-accent float-glow" />
           <h2 className="font-futuristic text-sm font-bold text-gradient-accent uppercase tracking-wider">
-            Chinnikstah Constellation — 20 Living Modules
+            Chinnikstah Constellation — Adaptive KI Core
           </h2>
         </div>
         <p className="font-mono text-[10px] text-muted-foreground mb-3 ml-6">
-          Tap any module to open its live stream, philosophy, and trader interpretation.
+          Tap any layer of the Adaptive KI Core to open its live stream, philosophy, and trader interpretation.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -397,7 +448,7 @@ export default function SmaiChinnikstah() {
           <div className="lg:col-span-2">
             <ChinnikstahLiveModule
               title="KI Verdict Synthesis"
-              subtitle="The final unified action plan distilled from all 20 modules"
+              subtitle="The final unified action plan distilled from the entire Adaptive KI Core"
               preview={<VerdictSynthesis data={features.verdict} />}
               compute={() => kiVerdictSynthesis(composite)}
               renderLive={(d) => (
@@ -409,7 +460,7 @@ export default function SmaiChinnikstah() {
                   <div className="italic text-foreground/80 mt-2">"{d.note}"</div>
                 </div>
               )}
-              explanation="The synthesis layer collapses all 12 indicator families and 19 supporting modules into one decisive playbook with entry, stop, target and risk note."
+              explanation="The synthesis layer collapses the 12 indicator families and the rest of the Adaptive KI Core into one decisive playbook with entry, stop, target and risk note."
               whatItMeans="When the action says 'High Conviction', size up within risk rules. 'Stand Aside' means harmony is too low — preserving capital is the trade."
               philosophy="In Chinnikstah, the verdict is never a command — it's a mirror. It reflects what the market has already decided, so the trader can move with the current instead of against it."
             />
@@ -548,7 +599,7 @@ export default function SmaiChinnikstah() {
             title="Sentiment Polarity"
             subtitle="Crowd reading across 5 sources"
             preview={<SentimentPolarity data={features.sentiment} />}
-            compute={() => liveSentiment()}
+            compute={() => liveSentiment(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 {d.map((s: any) => (
@@ -568,7 +619,7 @@ export default function SmaiChinnikstah() {
             title="Liquidity Magnets"
             subtitle="Where price is being pulled"
             preview={<LiquidityMagnets data={features.magnets} />}
-            compute={() => liveMagnets()}
+            compute={() => liveMagnets(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 {d.map((m: any, i: number) => (
@@ -588,7 +639,7 @@ export default function SmaiChinnikstah() {
             title="Whale Pulse"
             subtitle="Large-order and exchange flow"
             preview={<WhalePulse data={features.whales} />}
-            compute={() => liveWhalePulse()}
+            compute={() => liveWhalePulse(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 <div className="flex justify-between"><span className="text-muted-foreground">Large orders (1h)</span><span>{d.largeOrders}</span></div>
@@ -606,7 +657,7 @@ export default function SmaiChinnikstah() {
             title="AI Pattern Recognition"
             subtitle="High-confidence chart patterns"
             preview={<PatternRecognition data={features.patterns} />}
-            compute={() => livePatterns()}
+            compute={() => livePatterns(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 {d.length === 0 ? <p className="text-muted-foreground">No patterns above 50% confidence right now.</p> :
@@ -628,7 +679,7 @@ export default function SmaiChinnikstah() {
             title="Behavioral Traps"
             subtitle="Active manipulation patterns"
             preview={<BehavioralTraps data={features.traps} />}
-            compute={() => liveTraps()}
+            compute={() => liveTraps(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 <div className="text-foreground">Severity: <span className="font-bold uppercase">{d.severity}</span></div>
@@ -646,7 +697,7 @@ export default function SmaiChinnikstah() {
             title="Anomaly Scanner"
             subtitle="Statistical outliers right now"
             preview={<AnomalyScanner data={features.anomalies} />}
-            compute={() => liveAnomalies()}
+            compute={() => liveAnomalies(composite)}
             renderLive={(d) => (
               <div className="space-y-1 font-mono text-[10px]">
                 <div>Total active: <span className="font-bold text-foreground">{d.total}</span></div>
@@ -717,7 +768,7 @@ export default function SmaiChinnikstah() {
             title="Cross-Asset Contagion"
             subtitle="How other markets are pulling this one"
             preview={<CrossAssetContagion data={features.contagion} />}
-            compute={() => liveContagion()}
+            compute={() => liveContagion(composite)}
             renderLive={(d) => (
               <div className="grid grid-cols-5 gap-2 font-mono text-[10px] text-center">
                 {d.map((a: any) => (
