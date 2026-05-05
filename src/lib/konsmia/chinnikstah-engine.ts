@@ -436,8 +436,11 @@ function generateFractal(rng: () => number): IndicatorReading {
 
 // ───── Main Composite Generator ─────
 
-export function generateChinnikstah(): ChinnikstahComposite {
-  const seed = getTimeSeed();
+export function generateChinnikstah(
+  asset: string = 'BTC/USD',
+  timeframe: ChinnikstahTimeframe = '1H',
+): ChinnikstahComposite {
+  const seed = candleSeed(asset, timeframe);
   const rng = seededRandom(seed);
 
   const readings: IndicatorReading[] = [
@@ -474,6 +477,14 @@ export function generateChinnikstah(): ChinnikstahComposite {
   const phase = unifiedScore > 30 ? 'markup' : unifiedScore > 0 ? 'accumulation' : unifiedScore > -30 ? 'distribution' : 'markdown';
 
   const direction = scoreToDirection(unifiedScore);
+  const bias: ChinnikstahBias = unifiedScore > 15 ? 'buy' : unifiedScore < -15 ? 'sell' : 'neutral';
+
+  const trendReading = readings.find(r => r.family === 'trend')!;
+  const volReading = readings.find(r => r.family === 'volatility')!;
+  const trendStrength = Math.abs(trendReading.score);
+  const state: ChinnikstahState =
+    volReading.score > 35 ? 'volatile' :
+    trendStrength > 35 ? 'trending' : 'ranging';
 
   const verdicts: Record<ChinnikstahDirection, string> = {
     strong_buy: 'Chinnikstah reads STRONG CONVERGENCE — multiple indicator families align bullish. High-confidence entry window detected.',
@@ -495,6 +506,10 @@ export function generateChinnikstah(): ChinnikstahComposite {
     unifiedScore,
     unifiedConfidence,
     direction,
+    bias,
+    state,
+    asset,
+    timeframe,
     phase,
     dominantFamily,
     harmonyIndex,
