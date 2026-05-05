@@ -1,17 +1,20 @@
 /**
  * SMAI CHINNIKSTAH — 20 ADVANCED FEATURES
  * ────────────────────────────────────────
- * Layered modules that extend the base Chinnikstah engine with
+ * Adaptive KI Core layers that extend the base Chinnikstah engine with
  * next-generation analytics inspired by the next 100 years of trading research.
  *
- * All deterministic from a 5-min seed for stable UI.
+ * All deterministic from the active (asset, timeframe) candle seed.
  */
 
 import type { ChinnikstahComposite, ChinnikstahDirection } from './chinnikstah-engine';
+import { candleSeed } from './chinnikstah-engine';
 
 function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)); }
 function rng(seed: number) { let s = seed; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
-function seedFor(salt: number) { return Math.floor(Date.now() / 300000) + salt; }
+function seedFor(c: ChinnikstahComposite, salt: number) {
+  return candleSeed(c.asset, c.timeframe, salt);
+}
 
 // 1. Quantum Probability Cone
 export function quantumProbabilityCone(c: ChinnikstahComposite) {
