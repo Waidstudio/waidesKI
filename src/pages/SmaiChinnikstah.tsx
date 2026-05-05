@@ -436,11 +436,11 @@ export default function SmaiChinnikstah() {
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="h-4 w-4 text-accent float-glow" />
           <h2 className="font-futuristic text-sm font-bold text-gradient-accent uppercase tracking-wider">
-            Chinnikstah Constellation — 20 Living Modules
+            Chinnikstah Constellation — Adaptive KI Core
           </h2>
         </div>
         <p className="font-mono text-[10px] text-muted-foreground mb-3 ml-6">
-          Tap any module to open its live stream, philosophy, and trader interpretation.
+          Tap any layer of the Adaptive KI Core to open its live stream, philosophy, and trader interpretation.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -448,7 +448,7 @@ export default function SmaiChinnikstah() {
           <div className="lg:col-span-2">
             <ChinnikstahLiveModule
               title="KI Verdict Synthesis"
-              subtitle="The final unified action plan distilled from all 20 modules"
+              subtitle="The final unified action plan distilled from the entire Adaptive KI Core"
               preview={<VerdictSynthesis data={features.verdict} />}
               compute={() => kiVerdictSynthesis(composite)}
               renderLive={(d) => (
@@ -460,7 +460,7 @@ export default function SmaiChinnikstah() {
                   <div className="italic text-foreground/80 mt-2">"{d.note}"</div>
                 </div>
               )}
-              explanation="The synthesis layer collapses all 12 indicator families and 19 supporting modules into one decisive playbook with entry, stop, target and risk note."
+              explanation="The synthesis layer collapses the 12 indicator families and the rest of the Adaptive KI Core into one decisive playbook with entry, stop, target and risk note."
               whatItMeans="When the action says 'High Conviction', size up within risk rules. 'Stand Aside' means harmony is too low — preserving capital is the trade."
               philosophy="In Chinnikstah, the verdict is never a command — it's a mirror. It reflects what the market has already decided, so the trader can move with the current instead of against it."
             />
