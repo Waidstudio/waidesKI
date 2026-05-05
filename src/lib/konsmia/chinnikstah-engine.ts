@@ -8,6 +8,9 @@
  */
 
 export type ChinnikstahDirection = 'strong_buy' | 'buy' | 'neutral' | 'sell' | 'strong_sell';
+export type ChinnikstahTimeframe = '5m' | '15m' | '1H' | '4H' | '1D';
+export type ChinnikstahBias = 'buy' | 'sell' | 'neutral';
+export type ChinnikstahState = 'trending' | 'ranging' | 'volatile';
 export type IndicatorFamily = 
   | 'trend' | 'momentum' | 'volatility' | 'volume' 
   | 'sentiment' | 'liquidity' | 'correlation' | 'temporal'
@@ -36,6 +39,10 @@ export interface ChinnikstahComposite {
   unifiedScore: number;       // -100 to +100
   unifiedConfidence: number;  // 0-100
   direction: ChinnikstahDirection;
+  bias: ChinnikstahBias;
+  state: ChinnikstahState;
+  asset: string;
+  timeframe: ChinnikstahTimeframe;
   phase: 'accumulation' | 'markup' | 'distribution' | 'markdown';
   dominantFamily: IndicatorFamily;
   harmonyIndex: number;       // 0-100 — how aligned all indicators are
@@ -58,10 +65,33 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-function getTimeSeed(): number {
-  const now = new Date();
-  // Changes every 5 minutes — stable enough for UI, dynamic enough to feel alive
-  return Math.floor(now.getTime() / 300000);
+const TIMEFRAME_MS: Record<ChinnikstahTimeframe, number> = {
+  '5m': 5 * 60_000,
+  '15m': 15 * 60_000,
+  '1H': 60 * 60_000,
+  '4H': 4 * 60 * 60_000,
+  '1D': 24 * 60 * 60_000,
+};
+
+export function timeframeMs(tf: ChinnikstahTimeframe): number {
+  return TIMEFRAME_MS[tf];
+}
+
+function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return Math.abs(h);
+}
+
+/**
+ * Candle-close seed: identical until the current candle closes, so all
+ * Adaptive KI Core readings stay stable inside a candle and recompute together
+ * on the next close. Depends on asset + timeframe so each pair has its own
+ * deterministic stream.
+ */
+export function candleSeed(asset: string, tf: ChinnikstahTimeframe, salt = 0): number {
+  const bucket = Math.floor(Date.now() / TIMEFRAME_MS[tf]);
+  return (bucket * 1009 + hashStr(asset.toUpperCase()) * 17 + salt) % 2147483647;
 }
 
 function scoreToDirection(score: number): ChinnikstahDirection {
