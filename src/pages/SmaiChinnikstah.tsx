@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { generateChinnikstah, type ChinnikstahComposite, type IndicatorReading, type ChinnikstahDirection } from '@/lib/konsmia/chinnikstah-engine';
+import { generateChinnikstah, type ChinnikstahComposite, type IndicatorReading, type ChinnikstahDirection, type ChinnikstahTimeframe } from '@/lib/konsmia/chinnikstah-engine';
 import {
   getAllAdvancedFeatures,
   liveQuantumCone, liveSmartMoney, liveWhalePulse, liveMtf, liveHeatwave,
@@ -23,6 +23,11 @@ import {
   ChinnikstahMemory, AnomalyScanner, VerdictSynthesis,
 } from '@/components/chinnikstah/AdvancedPanels';
 import { ChinnikstahLiveModule } from '@/components/chinnikstah/ChinnikstahLiveModule';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+
+const ASSETS = ['BTC/USD','ETH/USD','SOL/USD','EUR/USD','GBP/USD','USD/JPY','XAU/USD','AAPL','TSLA','NVDA'] as const;
+const TIMEFRAMES: ChinnikstahTimeframe[] = ['5m','15m','1H','4H','1D'];
 
 const familyIcons: Record<string, any> = {
   trend: TrendingUp, momentum: Activity, volatility: Waves, volume: BarChart3,
@@ -278,8 +283,14 @@ function PhaseIndicator({ phase }: { phase: string }) {
 
 // ─── Main Page ───
 export default function SmaiChinnikstah() {
-  const composite = useMemo(() => generateChinnikstah(), []);
+  const [asset, setAsset] = useState<string>('BTC/USD');
+  const [timeframe, setTimeframe] = useState<ChinnikstahTimeframe>('1H');
+  // Recomputes when asset OR timeframe changes (and via candle-close seed inside engine)
+  const composite = useMemo(() => generateChinnikstah(asset, timeframe), [asset, timeframe]);
   const features = useMemo(() => getAllAdvancedFeatures(composite), [composite]);
+
+  const stateColor = composite.state === 'trending' ? 'text-success' : composite.state === 'volatile' ? 'text-warning' : 'text-info';
+  const biasColor = composite.bias === 'buy' ? 'text-success' : composite.bias === 'sell' ? 'text-danger' : 'text-muted-foreground';
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-20 sm:pb-0">
@@ -290,9 +301,49 @@ export default function SmaiChinnikstah() {
           <h1 className="text-lg sm:text-2xl font-futuristic font-black neon-text text-gradient-primary">Smai Chinnikstah</h1>
         </div>
         <p className="font-mono text-[10px] text-muted-foreground mt-1">
-          The Unified Indicator — {composite.readings.length} families • {composite.readings.reduce((s, r) => s + r.subIndicators.length, 0)} indicators • 20 advanced modules
+          The Unified Indicator — {composite.readings.length} families • {composite.readings.reduce((s, r) => s + r.subIndicators.length, 0)} indicators • Adaptive KI Core
         </p>
       </div>
+
+      {/* Asset + Timeframe controls + Trust strip */}
+      <TerminalCard title="ACTIVE CONTEXT" subtitle="Asset & timeframe drive every Adaptive KI Core calculation">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[10px] text-muted-foreground uppercase">Asset</span>
+            <Select value={asset} onValueChange={setAsset}>
+              <SelectTrigger className="h-8 w-[130px] font-mono text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ASSETS.map(a => <SelectItem key={a} value={a} className="font-mono text-xs">{a}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[10px] text-muted-foreground uppercase">Timeframe</span>
+            <div className="flex gap-1">
+              {TIMEFRAMES.map(tf => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  className={cn(
+                    'px-2.5 py-1 rounded font-mono text-[11px] border transition-all',
+                    timeframe === tf
+                      ? 'bg-primary/20 border-primary text-primary font-bold'
+                      : 'bg-secondary/20 border-border/40 text-muted-foreground hover:text-foreground'
+                  )}
+                >{tf}</button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
+            <Badge variant="outline" className="font-mono text-[10px]">State: <span className={cn('ml-1 font-bold capitalize', stateColor)}>{composite.state}</span></Badge>
+            <Badge variant="outline" className="font-mono text-[10px]">Bias: <span className={cn('ml-1 font-bold capitalize', biasColor)}>{composite.bias}</span></Badge>
+            <Badge variant="outline" className="font-mono text-[10px]">Confidence: <span className="ml-1 font-bold text-foreground">{composite.unifiedConfidence}%</span></Badge>
+          </div>
+        </div>
+        <p className="font-mono text-[9px] text-muted-foreground mt-2">
+          All indicators recompute on asset / timeframe change and on candle close. Output schema: <span className="text-foreground">{`{ score, bias, confidence, state }`}</span>
+        </p>
+      </TerminalCard>
 
       {/* Main Gauge + Meta */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
