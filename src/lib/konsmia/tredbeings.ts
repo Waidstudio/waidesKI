@@ -90,12 +90,30 @@ export function expandSignal(
   const takeProfit = dir === 'short' ? entry * (1 - tpPct) : entry * (1 + tpPct);
   const rr = +(tpPct / Math.max(slPct, 0.0001)).toFixed(2);
 
-  const trend = pick(seed, ['Uptrend - HH/HL', 'Downtrend - LH/LL', 'Range-bound', 'Expanding']);
-  const momentum = pick(seed >> 1, ['Accelerating', 'Stalling', 'Reversing', 'Steady']);
-  const volatility = pick(seed >> 2, ['Compressed', 'Expanding', 'Spike risk', 'Normal']);
-  const liquidity = pick(seed >> 3, ['Liquidity above', 'Liquidity below', 'Sweep complete', 'Thin pockets']);
-  const structure = pick(seed >> 4, ['BOS confirmed', 'CHoCH forming', 'Re-test in progress', 'Order block tap']);
-  const histAcc = 60 + Math.abs((seed >> 5) % 30); // 60–89%
+  // Real values derived from upstream Adaptive KI Core analysis (no random)
+  const macroScore = signal.macro?.score ?? 0;
+  const microScore = signal.micro?.score ?? 0;
+  const psychScore = signal.psychological?.score ?? 0;
+  const liqScore = signal.liquidity?.liquidityScore ?? signal.liquidity?.score ?? 0;
+  const trend = macroScore > 25 ? 'Uptrend — HH/HL confirmed'
+              : macroScore < -25 ? 'Downtrend — LH/LL confirmed'
+              : Math.abs(macroScore) < 10 ? 'Range-bound — no clear bias'
+              : 'Expanding — directional build-up';
+  const momentum = signal.verdict.signalStrength > 75 ? 'Accelerating'
+                 : signal.verdict.signalStrength > 50 ? 'Steady'
+                 : signal.verdict.signalStrength > 25 ? 'Stalling' : 'Reversing';
+  const volatility = basePct * 100 > 3 ? 'Spike risk'
+                    : basePct * 100 > 1.5 ? 'Expanding'
+                    : basePct * 100 < 0.5 ? 'Compressed' : 'Normal';
+  const liquidity = liqScore > 60 ? 'Deep liquidity above'
+                  : liqScore > 30 ? 'Liquidity pools nearby'
+                  : liqScore < -30 ? 'Liquidity below — sweep risk' : 'Thin pockets';
+  const structure = signal.micro?.marketStructure
+                  || (microScore > 20 ? 'BOS confirmed' : microScore < -20 ? 'CHoCH forming' : 'Re-test in progress');
+  // Historical accuracy from confidence + multi-TF alignment (deterministic)
+  const histAcc = Math.min(95, Math.max(50,
+    Math.round(signal.confidencePercent * 0.7 + (signal.multiTimeframeAligned ? 15 : 5) + (psychScore > 0 ? 5 : 0))
+  ));
 
   return {
     signal_id: signal.id,
