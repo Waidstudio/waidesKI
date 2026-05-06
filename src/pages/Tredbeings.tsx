@@ -165,7 +165,7 @@ export default function Tredbeings() {
         <div>
           <h1 className="font-futuristic text-xl font-black tracking-widest text-gradient-primary">TREDBEINGS COMMAND CENTER</h1>
           <p className="text-[10px] font-mono text-muted-foreground">
-            Each Tredbeing is a living engine. All execution flows into <Link to="/sandbox" className="text-primary underline">/sandbox</Link>.
+            Each Tredbeing is a living engine. All execution flows into the <Link to="/sandbox" className="text-primary underline">Smai Forge</Link>.
           </p>
         </div>
         <div className="flex items-center gap-2">
