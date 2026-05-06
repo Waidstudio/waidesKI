@@ -171,7 +171,7 @@ export default function Tredbeings() {
         <div className="flex items-center gap-2">
           <OnyixBadge />
           <Button asChild size="sm" variant="outline" className="font-mono text-xs">
-            <Link to="/sandbox"><ExternalLink className="h-3 w-3 mr-1" />Sandbox</Link>
+            <Link to="/sandbox"><ExternalLink className="h-3 w-3 mr-1" />Smai Forge</Link>
           </Button>
         </div>
       </div>
@@ -357,7 +357,7 @@ function EngineCard({ engine, asset, timeframe, expansion, stats, busy, hasSigna
             <CheckCircle2 className="h-3 w-3 mr-1" /> Reprocess
           </Button>
           <Button size="sm" disabled={busy || !hasSignal} onClick={() => onRun(true)} className="flex-1 font-mono text-xs">
-            <Play className="h-3 w-3 mr-1" /> Execute (Sandbox)
+            <Play className="h-3 w-3 mr-1" /> Execute (Forge)
           </Button>
         </div>
       </div>
