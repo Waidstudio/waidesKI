@@ -20,16 +20,6 @@ export const konsAi: KonsmiaModule = {
   integrity: 100,
 };
 
-// WombLayer — Memory + Identity Source
-export const wombLayer: KonsmiaModule = {
-  id: 'womblayer',
-  name: 'WombLayer',
-  description: 'Memory and identity source — stores historical patterns, learned behaviors, and core identity',
-  status: 'online',
-  lastSync: new Date().toISOString(),
-  integrity: 95,
-};
-
 // KonsNet — Data & Signal Flow (dynamically tracks sync state)
 let konsNetSyncStart = Date.now();
 let konsNetReady = false;
@@ -75,7 +65,7 @@ export const shavokaKI: KonsmiaModule = {
   integrity: 100,
 };
 
-export const allModules: KonsmiaModule[] = [konsOS, konsAi, wombLayer, konsNet, webonyix, shavokaKI];
+export const allModules: KonsmiaModule[] = [konsOS, konsAi, konsNet, webonyix, shavokaKI];
 
 // Governance check via KonsOS
 export function checkGovernance(action: string): boolean {
@@ -87,12 +77,6 @@ export function checkEthicalAlignment(signalScore: number): boolean {
   if (konsAi.status !== 'online' || shavokaKI.status !== 'online') return false;
   if (konsAi.integrity < 90 || shavokaKI.integrity < 90) return false;
   return signalScore > -50;
-}
-
-// Memory recall via WombLayer
-export function recallPattern(asset: string): string {
-  if (wombLayer.status !== 'online') return 'Memory unavailable';
-  return `Historical pattern for ${asset} loaded from WombLayer`;
 }
 
 // Data flow via KonsNet

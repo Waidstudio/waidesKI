@@ -130,7 +130,7 @@ export function expandSignal(
   };
 }
 
-/** Persist expansion + log to womb layer. Consumes Onyix. */
+/** Persist expansion. Execution flows into /sandbox. Consumes Onyix. */
 export async function processTredbeing(
   signal: WaidesSignal,
   engine: TredEngine,
@@ -163,16 +163,7 @@ export async function processTredbeing(
     exp.id = savedId;
   } catch (e) { console.warn('tredbeing persist failed', e); }
 
-  // Womb layer archive
-  try {
-    await supabase.from('womb_layer').insert({
-      layer: 'tredbeing_expansion', ref_id: exp.signal_id,
-      asset: exp.asset, timeframe: exp.timeframe, engine: exp.engine,
-      payload: exp as any,
-    });
-  } catch {/* ignore */}
-
-  // Smai Being execution — sandbox trade
+  // Sandbox execution — routed into the existing /sandbox engine
   if (opts.autoExecute && exp.bias !== 'neutral') {
     await consumeOnyix('sandbox_open');
     const plan: TradePlan = {
