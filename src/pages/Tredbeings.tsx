@@ -15,6 +15,8 @@ import {
   TRED_TIMEFRAMES, type TredEngine, type TredTimeframe, type TredbeingExpansion,
 } from '@/lib/konsmia/tredbeings';
 import { getLivePrice } from '@/lib/konsmia/live-prices';
+import { EngineFeedPanel } from '@/components/EngineFeedPanel';
+import { candleBucket, nextCandleCloseAt, ENGINE_REGISTRY } from '@/lib/konsmia/engine-registry';
 import {
   Activity, Brain, Target, Shield, TrendingUp, MessageSquare,
   CheckCircle2, AlertTriangle, Clock, Cpu, Play, ExternalLink, Zap,
@@ -126,11 +128,27 @@ export default function Tredbeings() {
   // Auto-expand when context changes (key-guarded — backend driven)
   const lastKey = useRef('');
   useEffect(() => {
-    const key = `${asset}|${timeframe}|${signal?.id ?? ''}`;
+    // Gate recompute on the closed-candle bucket — predictions only update
+    // after a new candle closes for the selected timeframe.
+    const bucket = candleBucket(timeframe);
+    const key = `${asset}|${timeframe}|${signal?.id ?? ''}|${bucket}`;
     if (key === lastKey.current || !signal) return;
     lastKey.current = key;
     say(`Context locked: ${asset} · ${timeframe} · live ${livePrice ? `$${livePrice}` : '…'}`, 'info');
     reprocessAll(false);
+    // eslint-disable-next-line
+  }, [asset, timeframe, signal?.id]);
+
+  // Schedule a single recompute exactly at the next candle close (no polling).
+  useEffect(() => {
+    if (!signal) return;
+    const closeAt = nextCandleCloseAt(timeframe);
+    const delay = Math.max(2_000, closeAt - Date.now() + 500);
+    const id = setTimeout(() => {
+      say(`New ${timeframe} candle closed → refreshing predictions`, 'work');
+      reprocessAll(false);
+    }, delay);
+    return () => clearTimeout(id);
     // eslint-disable-next-line
   }, [asset, timeframe, signal?.id]);
 
@@ -224,6 +242,9 @@ export default function Tredbeings() {
           />
         ))}
       </div>
+
+      {/* DATA-SOURCE VERIFICATION — confirms each engine's feed is alive */}
+      <EngineFeedPanel engines={engines} />
 
       {/* Live narration — backend-driven */}
       <TerminalCard title="LIVE NARRATION" subtitle="What the engines are doing, in real time">
