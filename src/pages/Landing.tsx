@@ -8,14 +8,13 @@ const features = [
   { icon: Clock, title: 'Time-Bound Precision', desc: 'Forecasts with temporal precision — not vague predictions, exact windows' },
   { icon: Shield, title: 'Ethical Alignment', desc: 'Every signal passes through KonsAi and Shavoka KI ethical firewalls' },
   { icon: TrendingUp, title: 'Tredbeings Execution', desc: 'Autonomous trading entities that execute, adapt, and learn within boundaries' },
-  { icon: Network, title: 'Konsmia Integration', desc: 'Connected to KonsOS, KonsNet, WombLayer, Webonyix — fully system-synchronized' },
+  { icon: Network, title: 'Konsmia Integration', desc: 'Connected to KonsOS, KonsNet, Webonyix — fully system-synchronized' },
   { icon: Eye, title: 'Discipline Over Impulse', desc: 'Can say No Trade when markets are unclear — real intelligence knows when not to act' },
 ];
 
 const konsmiaLayers = [
   { name: 'KonsOS', role: 'Sovereign Governance' },
   { name: 'KonsAi', role: 'Consciousness Alignment' },
-  { name: 'WombLayer', role: 'Memory & Identity' },
   { name: 'KonsNet', role: 'Data & Signal Flow' },
   { name: 'Webonyix', role: 'Value Transmutation' },
   { name: 'Shavoka KI', role: 'Ethical Firewall' },

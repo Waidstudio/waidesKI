@@ -94,7 +94,6 @@ export default function Settings() {
         <div className="space-y-2 text-xs text-muted-foreground">
           <p>• <span className="text-foreground">KonsOS</span> — Governance: Active</p>
           <p>• <span className="text-foreground">KonsAi</span> — Consciousness: Online</p>
-          <p>• <span className="text-foreground">WombLayer</span> — Memory: 95% integrity</p>
           <p>• <span className="text-foreground">KonsNet</span> — Data Flow: Syncing</p>
           <p>• <span className="text-foreground">Webonyix</span> — Value Reserve: Active</p>
           <p>• <span className="text-foreground">Shavoka KI</span> — Ethical Firewall: {ethicalFilter ? 'ENABLED' : 'DISABLED'}</p>
