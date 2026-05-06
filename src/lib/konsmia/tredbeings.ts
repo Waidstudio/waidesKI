@@ -130,7 +130,7 @@ export function expandSignal(
   };
 }
 
-/** Persist expansion + log to womb layer. Consumes Onyix. */
+/** Persist expansion. Execution flows into /sandbox. Consumes Onyix. */
 export async function processTredbeing(
   signal: WaidesSignal,
   engine: TredEngine,
