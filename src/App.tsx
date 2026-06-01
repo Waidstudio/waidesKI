@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import Index from "./pages/Index.tsx";
 import DashboardLayout from "./layouts/DashboardLayout.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Analysis from "./pages/Analysis.tsx";
@@ -32,8 +33,8 @@ const App = () => (
       <BrowserRouter>
         <ErrorBoundary>
           <Routes>
+            <Route path="/" element={<Index />} />
             <Route element={<DashboardLayout />}>
-              <Route path="/" element={<Chat />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/signals" element={<Signals />} />

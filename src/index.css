@@ -6,62 +6,61 @@
 
 @layer base {
   :root {
-    /* WAIDES KI — STRICT PALETTE: black · cyan · purple · white */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    /* WAIDES KI — NEXUS THEME: cyan + purple + black + white */
+    --background: 260 30% 3%;
+    --foreground: 0 0% 98%;
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
+    --card: 260 25% 6%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 4%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 260 25% 6%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 185 100% 55%;            /* Cyan */
-    --primary-foreground: 0 0% 0%;
-    --primary-glow: 185 100% 70%;
+    --primary: 185 100% 55%;            /* Cyan core */
+    --primary-foreground: 260 30% 3%;
+    --primary-glow: 190 100% 65%;
 
-    --secondary: 0 0% 8%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 260 25% 10%;
+    --secondary-foreground: 0 0% 92%;
 
-    --muted: 0 0% 7%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 260 20% 9%;
+    --muted-foreground: 250 10% 60%;
 
-    --accent: 280 90% 65%;              /* Purple */
+    --accent: 280 90% 65%;              /* Electric purple */
     --accent-foreground: 0 0% 100%;
-    --accent-glow: 280 95% 75%;
+    --accent-glow: 285 95% 75%;
 
-    --destructive: 280 90% 65%;
+    --destructive: 348 95% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 14%;
-    --input: 0 0% 12%;
+    --border: 260 30% 16%;
+    --input: 260 30% 14%;
     --ring: 185 100% 55%;
 
     --radius: 0.625rem;
 
-    /* Status tokens collapsed to palette: positive=cyan, attention=purple, neutral=white */
-    --success: 185 100% 55%;
-    --warning: 280 90% 65%;
-    --danger: 280 90% 65%;
-    --info: 185 100% 55%;
+    --success: 165 90% 50%;
+    --warning: 42 100% 60%;
+    --danger: 348 95% 60%;
+    --info: 200 100% 60%;
 
     --glow-primary: 0 0 24px hsl(185 100% 55% / 0.45);
     --glow-accent: 0 0 28px hsl(280 90% 65% / 0.5);
-    --glow-danger: 0 0 22px hsl(280 90% 65% / 0.45);
+    --glow-danger: 0 0 22px hsl(348 95% 60% / 0.45);
 
     --gradient-primary: linear-gradient(135deg, hsl(185 100% 55%), hsl(280 90% 65%));
-    --gradient-accent: linear-gradient(135deg, hsl(280 90% 65%), hsl(185 100% 55%));
-    --gradient-dark: radial-gradient(ellipse at top, hsl(0 0% 6%), hsl(0 0% 0%) 70%);
-    --gradient-card: linear-gradient(140deg, hsl(0 0% 6%), hsl(0 0% 3%));
-    --gradient-nexus: linear-gradient(120deg, hsl(185 100% 55% / 0.14), hsl(280 90% 65% / 0.14));
+    --gradient-accent: linear-gradient(135deg, hsl(280 90% 65%), hsl(310 90% 60%));
+    --gradient-dark: radial-gradient(ellipse at top, hsl(265 35% 8%), hsl(260 30% 3%) 60%, hsl(255 30% 2%));
+    --gradient-card: linear-gradient(140deg, hsl(265 28% 8% / 0.9), hsl(260 25% 5% / 0.9));
+    --gradient-nexus: linear-gradient(120deg, hsl(185 100% 55% / 0.18), hsl(280 90% 65% / 0.18));
 
-    --sidebar-background: 0 0% 2%;
-    --sidebar-foreground: 0 0% 92%;
+    --sidebar-background: 260 30% 4%;
+    --sidebar-foreground: 0 0% 88%;
     --sidebar-primary: 185 100% 55%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 8%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 12%;
+    --sidebar-primary-foreground: 260 30% 3%;
+    --sidebar-accent: 260 25% 10%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 260 30% 14%;
     --sidebar-ring: 185 100% 55%;
 
     --font-display: 'Space Grotesk', system-ui, sans-serif;
@@ -75,16 +74,10 @@
     @apply border-border;
   }
 
-  html, #root {
-    background-color: #000;
-    color-scheme: dark;
-    min-height: 100%;
-  }
-
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-display);
-    background: #000;
+    background: var(--gradient-dark);
     background-attachment: fixed;
   }
 
@@ -137,8 +130,9 @@
     box-shadow:
       inset 0 0 0 1px hsl(185 100% 55% / 0.06),
       0 0 0 1px hsl(280 90% 65% / 0.04),
-      0 8px 32px -12px hsl(0 0% 0% / 0.8);
+      0 8px 32px -12px hsl(260 80% 5% / 0.6);
     background: var(--gradient-card);
+    backdrop-filter: blur(6px);
   }
   .nexus-border {
     border: 1px solid transparent;
