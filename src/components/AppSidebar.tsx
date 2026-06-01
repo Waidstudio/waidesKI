@@ -1,4 +1,5 @@
 import { Zap, BarChart3, TrendingUp, Briefcase, Network, Settings as SettingsIcon, Home, MessageCircle, Signal, Atom, BookOpen, User, Shield, Sparkles, Brain, Bot } from 'lucide-react';
+import { memo } from 'react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import {
@@ -8,6 +9,7 @@ import {
 import { StatusDot } from '@/components/StatusDot';
 
 const mainItems = [
+  { title: 'Speak with KI', url: '/', icon: MessageCircle },
   { title: 'Command Center', url: '/dashboard', icon: Home },
   { title: 'KI Analysis', url: '/analysis', icon: BarChart3 },
   { title: 'Signal Intelligence', url: '/signals', icon: Signal },
@@ -15,7 +17,6 @@ const mainItems = [
   { title: 'Market Pulse', url: '/markets', icon: TrendingUp },
   { title: 'Portfolio & Vault', url: '/portfolio', icon: Briefcase },
   { title: 'Trading Journal', url: '/journal', icon: BookOpen },
-  { title: 'Speak with KI', url: '/chat', icon: MessageCircle },
   { title: 'User Intelligence', url: '/profile', icon: User },
   { title: 'KonsAi', url: '/konsai', icon: Shield },
   { title: 'Smai Chinnikstah', url: '/chinnikstah', icon: Sparkles },
@@ -25,7 +26,7 @@ const mainItems = [
   { title: 'System Core', url: '/settings', icon: SettingsIcon },
 ];
 
-export function AppSidebar() {
+function AppSidebarImpl() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
 
@@ -65,3 +66,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+export const AppSidebar = memo(AppSidebarImpl);
