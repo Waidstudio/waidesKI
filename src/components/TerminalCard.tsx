@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { ReactNode } from 'react';
+import { ReactNode, memo } from 'react';
 
 interface TerminalCardProps {
   title?: string;
@@ -7,16 +7,17 @@ interface TerminalCardProps {
   children: ReactNode;
   className?: string;
   headerRight?: ReactNode;
+  variant?: 'primary' | 'accent';
 }
 
-export function TerminalCard({ title, subtitle, children, className, headerRight }: TerminalCardProps) {
+function TerminalCardImpl({ title, subtitle, children, className, headerRight, variant = 'primary' }: TerminalCardProps) {
   return (
-    <div className={cn('terminal-border rounded-lg bg-card overflow-hidden', className)}>
+    <div className={cn('terminal-border rounded-xl overflow-hidden', variant === 'accent' && 'accent', className)}>
       {(title || headerRight) && (
-        <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+        <div className="flex items-center justify-between border-b border-[hsl(0_0%_12%)] px-4 py-2.5 bg-black/40">
           <div>
-            {title && <h3 className="text-sm font-semibold font-mono text-foreground">{title}</h3>}
-            {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+            {title && <h3 className="text-sm font-semibold font-mono text-white">{title}</h3>}
+            {subtitle && <p className="text-xs text-white/55 mt-0.5">{subtitle}</p>}
           </div>
           {headerRight}
         </div>
@@ -25,3 +26,5 @@ export function TerminalCard({ title, subtitle, children, className, headerRight
     </div>
   );
 }
+
+export const TerminalCard = memo(TerminalCardImpl);

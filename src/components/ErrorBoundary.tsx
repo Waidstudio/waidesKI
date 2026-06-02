@@ -28,21 +28,23 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <TerminalCard title="SYSTEM ERROR">
+        <div className="min-h-screen w-full bg-black text-white flex items-center justify-center p-6">
+        <TerminalCard title="SYSTEM ERROR" className="max-w-md w-full">
           <div className="text-center py-6">
             <p className="text-lg mb-2">⚠️</p>
-            <p className="text-sm text-foreground font-semibold">Intelligence Module Error</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-white font-semibold">Intelligence Module Error</p>
+            <p className="text-xs text-white/60 mt-1">
               {this.state.error?.message || 'An unexpected error occurred.'}
             </p>
             <button
               onClick={() => this.setState({ hasError: false })}
-              className="mt-3 px-3 py-1.5 rounded text-xs font-mono border border-border text-muted-foreground hover:text-foreground transition-colors"
+              className="mt-3 px-3 py-1.5 rounded text-xs font-mono border border-[hsl(185_100%_55%/0.4)] text-primary hover:bg-[hsl(185_100%_55%/0.1)] transition-colors"
             >
               Retry
             </button>
           </div>
         </TerminalCard>
+        </div>
       );
     }
 
