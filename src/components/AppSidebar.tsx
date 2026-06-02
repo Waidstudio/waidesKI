@@ -30,10 +30,10 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
-      <SidebarContent>
-        <div className="flex items-center gap-2 px-4 py-4 border-b border-border/50">
-          <Zap className="h-4 w-4 text-primary shrink-0 float-glow" />
+    <Sidebar collapsible="icon" className="border-r border-[hsl(0_0%_12%)] bg-black">
+      <SidebarContent className="bg-black">
+        <div className="flex items-center gap-2 px-4 py-4 border-b border-[hsl(0_0%_12%)]">
+          <Zap className="h-4 w-4 text-primary shrink-0" />
           {!collapsed && <span className="font-futuristic text-xs font-black text-gradient-primary tracking-widest">WAIDES KI</span>}
           {!collapsed && <StatusDot status="online" className="ml-auto" />}
         </div>
@@ -46,8 +46,8 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono hover:bg-muted/50 text-muted-foreground transition-colors"
-                      activeClassName="bg-primary/10 text-primary">
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-mono text-white/65 hover:bg-[hsl(280_90%_65%/0.08)] hover:text-white transition-colors"
+                      activeClassName="bg-[hsl(185_100%_55%/0.1)] text-primary border border-[hsl(185_100%_55%/0.3)]">
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>

@@ -33,8 +33,8 @@ const App = () => (
       <BrowserRouter>
         <ErrorBoundary>
           <Routes>
-            <Route path="/" element={<Index />} />
             <Route element={<DashboardLayout />}>
+              <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/signals" element={<Signals />} />
