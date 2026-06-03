@@ -362,8 +362,8 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
 
       {/* Messenger-style input bar */}
       <div
-        className="border-t border-[hsl(0_0%_12%)] bg-black px-2 py-2"
-        style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))' }}
+        className="border-t border-[hsl(0_0%_12%)] bg-black px-2 py-2 sm:pb-2"
+        style={{ paddingBottom: 'calc(4.25rem + env(safe-area-inset-bottom, 0px))' }}
       >
         <div className="flex items-end gap-1.5">
           <button
