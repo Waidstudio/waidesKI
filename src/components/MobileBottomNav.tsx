@@ -29,19 +29,19 @@ function MobileBottomNavImpl() {
             const Icon = item.icon;
             if (item.center) {
               return (
-                <li key={item.path} className="-mt-5">
+                <li key={item.path} className="-mt-3">
                   <NavLink
                     to={item.path}
                     aria-label={item.label}
                     className={cn(
-                      'flex items-center justify-center w-10 h-10 rounded-full bg-black',
+                      'flex items-center justify-center w-8 h-8 rounded-full bg-black',
                       'border border-[hsl(185_100%_55%/0.6)]',
-                      'shadow-[0_0_14px_-2px_hsl(185_100%_55%/0.6),inset_0_0_12px_-6px_hsl(280_90%_65%/0.45)]',
+                      'shadow-[0_0_10px_-2px_hsl(185_100%_55%/0.55),inset_0_0_8px_-4px_hsl(280_90%_65%/0.4)]',
                       'transition-transform active:scale-95',
                       active && 'ring-1 ring-[hsl(280_90%_65%/0.7)]'
                     )}
                   >
-                    <Icon className="h-4 w-4 text-primary" />
+                    <Icon className="h-[14px] w-[14px] text-primary" />
                   </NavLink>
                 </li>
               );

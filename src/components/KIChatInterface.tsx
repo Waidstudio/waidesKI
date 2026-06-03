@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Brain, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Send, Sparkles, Plus, Smile, ThumbsUp } from 'lucide-react';
 import { kiRespond } from '@/lib/konsmia/soul-voice';
 import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage, KIMode } from '@/lib/konsmia/types';
 import ReactMarkdown from 'react-markdown';
 import { buildBrainContext, rememberPreference } from '@/lib/konsmia/ki-brain';
 import { useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 interface Props {
   mode?: KIMode;
@@ -28,11 +28,20 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [useAI, setUseAI] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-grow textarea
+  useEffect(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = '0px';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  }, [input]);
 
   // Load chat history from DB
   useEffect(() => {
@@ -214,53 +223,121 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
     }
   };
 
+  // Group messages so consecutive same-author bubbles stack tightly (Messenger style)
+  const grouped = useMemo(() => {
+    return messages.map((m, i) => {
+      const prev = messages[i - 1];
+      const next = messages[i + 1];
+      const samePrev = prev && prev.role === m.role;
+      const sameNext = next && next.role === m.role;
+      return { msg: m, samePrev: !!samePrev, sameNext: !!sameNext };
+    });
+  }, [messages]);
+
+  const quickPrompts = ['What do you see in BTC?', 'Risk for today?', 'Best setup now?'];
+
   return (
-    <div className="flex flex-col h-full">
-      {/* AI toggle */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/30 bg-secondary/10">
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {useAI ? '🧠 AI Intelligence Active' : '⚡ Local Intelligence'}
-        </span>
+    <div className="flex flex-col h-full bg-black">
+      {/* Messenger-style header */}
+      <div className="flex items-center gap-3 px-3 py-2 border-b border-[hsl(0_0%_12%)] bg-black/95">
+        <div className="relative">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-[hsl(185_100%_55%/0.25)] to-[hsl(280_90%_65%/0.25)] border border-[hsl(185_100%_55%/0.4)]">
+            <Sparkles className="h-4 w-4 text-primary" />
+          </div>
+          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary border-2 border-black shadow-[0_0_6px_hsl(185_100%_55%)]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-foreground leading-tight truncate">Waides KI</div>
+          <div className="text-[10px] text-primary/80 font-mono leading-tight">
+            {useAI ? 'Active now · AI intelligence' : 'Active · Local intelligence'}
+          </div>
+        </div>
         <button
           onClick={() => setUseAI(!useAI)}
-          className={`font-mono text-[10px] px-2 py-0.5 rounded border transition-colors ${
-            useAI ? 'border-primary/30 text-primary bg-primary/5' : 'border-border text-muted-foreground'
-          }`}
+          className={cn(
+            'font-mono text-[9px] px-2 py-1 rounded-full border transition-colors',
+            useAI
+              ? 'border-primary/40 text-primary bg-primary/5'
+              : 'border-border text-muted-foreground'
+          )}
+          aria-label="Toggle AI mode"
         >
           {useAI ? 'AI ON' : 'AI OFF'}
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-3 p-3 min-h-0">
-        {messages.map(msg => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-lg p-3 ${
-              msg.role === 'user'
-                ? 'bg-primary/10 border border-primary/20'
-                : 'bg-secondary/30 border border-border/50'
-            }`}>
-              {msg.role === 'ki' && (
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Brain className="h-3 w-3 text-primary" />
-                  <span className="font-mono text-[10px] text-primary">WAIDES KI</span>
+      {/* Messages — Messenger feed */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 min-h-0 [scrollbar-width:thin]">
+        {grouped.map(({ msg, samePrev, sameNext }) => {
+          const isUser = msg.role === 'user';
+          const showAvatar = !isUser && !sameNext;
+          const showName = !isUser && !samePrev;
+          return (
+            <div
+              key={msg.id}
+              className={cn(
+                'flex items-end gap-2',
+                isUser ? 'justify-end' : 'justify-start',
+                samePrev ? 'mt-0.5' : 'mt-3'
+              )}
+            >
+              {!isUser && (
+                <div className="w-7 shrink-0">
+                  {showAvatar && (
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-[hsl(185_100%_55%/0.25)] to-[hsl(280_90%_65%/0.25)] border border-[hsl(185_100%_55%/0.35)]">
+                      <Sparkles className="h-3 w-3 text-primary" />
+                    </div>
+                  )}
                 </div>
               )}
-              <div className="text-xs text-foreground/90 leading-relaxed prose prose-invert prose-xs max-w-none">
-                <ReactMarkdown>{msg.content}</ReactMarkdown>
+              <div className={cn('flex flex-col max-w-[78%]', isUser ? 'items-end' : 'items-start')}>
+                {showName && (
+                  <span className="text-[10px] text-muted-foreground font-mono mb-1 ml-1">Waides KI</span>
+                )}
+                <div
+                  className={cn(
+                    'px-3.5 py-2 text-[13px] leading-relaxed break-words',
+                    isUser
+                      ? 'bg-primary text-primary-foreground shadow-[0_0_12px_-4px_hsl(185_100%_55%/0.55)]'
+                      : 'bg-[hsl(0_0%_8%)] text-foreground border border-[hsl(0_0%_14%)]',
+                    // Bubble corner radii based on grouping (messenger style)
+                    isUser
+                      ? cn(
+                          'rounded-2xl rounded-br-md',
+                          samePrev && 'rounded-tr-md',
+                          sameNext && 'rounded-br-md'
+                        )
+                      : cn(
+                          'rounded-2xl rounded-bl-md',
+                          samePrev && 'rounded-tl-md',
+                          sameNext && 'rounded-bl-md'
+                        )
+                  )}
+                >
+                  <div className="prose prose-invert prose-sm max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_strong]:text-foreground">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                </div>
+                {!sameNext && (
+                  <span className="text-[9px] text-muted-foreground mt-1 px-1">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1.5 text-right">
-                {new Date(msg.timestamp).toLocaleTimeString()}
-              </p>
             </div>
-          </div>
-        ))}
+          );
+        })}
+
         {isStreaming && messages[messages.length - 1]?.role !== 'ki' && (
-          <div className="flex justify-start">
-            <div className="bg-secondary/30 border border-border/50 rounded-lg p-3">
-              <div className="flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 text-primary animate-spin" />
-                <span className="font-mono text-[10px] text-primary">WAIDES KI is analyzing...</span>
+          <div className="flex items-end gap-2 justify-start mt-3">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-[hsl(185_100%_55%/0.25)] to-[hsl(280_90%_65%/0.25)] border border-[hsl(185_100%_55%/0.35)]">
+              <Sparkles className="h-3 w-3 text-primary" />
+            </div>
+            <div className="bg-[hsl(0_0%_8%)] border border-[hsl(0_0%_14%)] rounded-2xl rounded-bl-md px-3 py-2.5">
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/80 animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/80 animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/80 animate-bounce" />
               </div>
             </div>
           </div>
@@ -268,20 +345,67 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t border-border/50 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask Waides KI anything..."
-            className="flex-1 bg-secondary/30 border border-border/50 rounded px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
-          />
-          <Button size="sm" onClick={sendMessage} disabled={!input.trim() || isStreaming} className="bg-primary text-primary-foreground h-8 px-3">
-            {isStreaming ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-          </Button>
+      {/* Quick prompts */}
+      {messages.length <= 1 && (
+        <div className="px-3 pb-2 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {quickPrompts.map(q => (
+            <button
+              key={q}
+              onClick={() => setInput(q)}
+              className="shrink-0 text-[11px] px-3 py-1.5 rounded-full border border-[hsl(0_0%_18%)] text-foreground/80 hover:border-primary/50 hover:text-primary transition-colors"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Messenger-style input bar */}
+      <div className="border-t border-[hsl(0_0%_12%)] bg-black px-2 pt-2 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:pb-2">
+        <div className="flex items-end gap-1.5">
+          <button
+            type="button"
+            aria-label="Add"
+            className="shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+          <div className="flex-1 flex items-end bg-[hsl(0_0%_8%)] border border-[hsl(0_0%_16%)] rounded-3xl px-3 py-1.5 focus-within:border-primary/50 transition-colors">
+            <textarea
+              ref={taRef}
+              rows={1}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Aa"
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none resize-none max-h-[120px] py-1.5 leading-snug"
+            />
+            <button
+              type="button"
+              aria-label="Emoji"
+              className="shrink-0 ml-1 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Smile className="h-4 w-4" />
+            </button>
+          </div>
+          {input.trim() ? (
+            <button
+              onClick={sendMessage}
+              disabled={isStreaming}
+              aria-label="Send"
+              className="shrink-0 h-9 w-9 rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-[0_0_10px_-2px_hsl(185_100%_55%/0.7)] active:scale-95 transition-transform disabled:opacity-50"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label="Like"
+              className="shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-primary hover:bg-primary/10 transition-colors"
+            >
+              <ThumbsUp className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
