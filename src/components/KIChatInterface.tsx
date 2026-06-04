@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Sparkles, Plus, ThumbsUp, ArrowLeft, ChevronDown, Brain, Atom, Bot, Activity } from 'lucide-react';
+import { Send, Sparkles, Plus, ThumbsUp, ArrowLeft, ChevronDown, Brain, Atom, Activity } from 'lucide-react';
 import { kiRespond } from '@/lib/konsmia/soul-voice';
 import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage, KIMode } from '@/lib/konsmia/types';
