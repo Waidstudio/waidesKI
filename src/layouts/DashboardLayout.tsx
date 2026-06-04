@@ -10,9 +10,13 @@ import { useEffect, useState } from 'react';
 import { useSignals } from '@/hooks/useSignals';
 import { useSandboxAutoTrader } from '@/hooks/useSandboxAutoTrader';
 import { useMarketData } from '@/hooks/useMarketData';
+import { useLocation } from 'react-router-dom';
 
 export default function DashboardLayout() {
   const [health, setHealth] = useState(getSystemHealth());
+  const { pathname } = useLocation();
+  // Chat surfaces own the full screen — no app header, no padding, no footer nav.
+  const isChatSurface = pathname === '/' || pathname.startsWith('/chat');
   // Keep market data + signals + auto-trader running globally so KI is always
   // training in the background no matter which page the user is on.
   useMarketData();
@@ -38,6 +42,7 @@ export default function DashboardLayout() {
         <div className="fixed inset-0 grid-pattern opacity-[0.08] pointer-events-none" />
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
+          {!isChatSurface && (
           <header className="sticky top-0 z-20 h-12 flex items-center border-b border-[hsl(0_0%_12%)] bg-black px-4 gap-3">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex items-center gap-2 sm:hidden">
@@ -63,7 +68,10 @@ export default function DashboardLayout() {
               </span>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 sm:p-6 pb-16 sm:pb-6">
+          )}
+          <main className={isChatSurface
+            ? "flex-1 overflow-hidden p-0"
+            : "flex-1 overflow-auto p-4 sm:p-6 pb-16 sm:pb-6"}>
             <Outlet />
           </main>
         </div>
