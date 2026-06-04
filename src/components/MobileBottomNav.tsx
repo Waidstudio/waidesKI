@@ -16,6 +16,10 @@ const navItems: Item[] = [
 function MobileBottomNavImpl() {
   const { pathname } = useLocation();
 
+  // Hide on any chat surface — the chat is the landing route ("/") and "/chat".
+  // Footer must disappear inside conversations for a cleaner experience.
+  if (pathname === '/' || pathname.startsWith('/chat')) return null;
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 sm:hidden pointer-events-none"

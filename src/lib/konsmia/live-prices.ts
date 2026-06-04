@@ -3,6 +3,21 @@
 // always reflect the latest CoinGecko / forex / stock price.
 
 const livePrices = new Map<string, number>();
+const listeners = new Set<(prices: Record<string, number>) => void>();
+
+function notify() {
+  const snap = Object.fromEntries(livePrices);
+  listeners.forEach(l => { try { l(snap); } catch {} });
+}
+
+/** Subscribe to live price broadcasts. Returns unsubscribe. */
+export function subscribeLivePrices(cb: (prices: Record<string, number>) => void): () => void {
+  listeners.add(cb);
+  return () => { listeners.delete(cb); };
+}
+
+/** Force a broadcast to all listeners — called after each batch fetch completes. */
+export function broadcastLivePrices() { notify(); }
 
 function normalizeKey(asset: string): string {
   // Accept "BTC", "BTC/USD", "btc-usd" — collapse to canonical

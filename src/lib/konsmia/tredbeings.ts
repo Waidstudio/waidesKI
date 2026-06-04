@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { consumeOnyix, depthForTier, isFrozen } from './onyix';
 import { getLivePrice } from './live-prices';
 import { openSandboxTrade, classifyAsset } from './sandbox-engine';
+import { generateChinnikstah, type ChinnikstahTimeframe } from './chinnikstah-engine';
 import type { WaidesSignal, TradePlan, Timeframe } from './types';
 
 export type TredEngine =
@@ -72,9 +73,27 @@ export function expandSignal(
   const profile = ENGINE_PROFILE[engine];
   const live = getLivePrice(signal.asset) ?? signal.livePrice ?? signal.tradePlans?.[0]?.entry ?? 0;
   const seed = hash(signal.id + engine + timeframe);
-  const dir: 'long' | 'short' | 'neutral' =
+  let dir: 'long' | 'short' | 'neutral' =
     signal.verdict.action === 'buy' ? 'long' :
     signal.verdict.action === 'sell' ? 'short' : 'neutral';
+
+  // ───── Smai Chinnikstah = central intelligence layer for every TredBeing.
+  // Tredbeings MUST align with Chinnikstah's market truth before generating a signal.
+  const chinTf: ChinnikstahTimeframe =
+    timeframe === '5m' || timeframe === '15m' ? '15m' :
+    timeframe === '30m' || timeframe === '1H' ? '1H' :
+    timeframe === '4H' || timeframe === '12H' ? '4H' : '1D';
+  const chin = generateChinnikstah(signal.asset, chinTf);
+  const chinDir: 'long' | 'short' | 'neutral' =
+    chin.bias === 'buy' ? 'long' : chin.bias === 'sell' ? 'short' : 'neutral';
+  // If TredBeing disagrees with Chinnikstah, freeze the trade (no contradictory signals)
+  if (dir !== 'neutral' && chinDir !== 'neutral' && dir !== chinDir) {
+    dir = 'neutral';
+  } else if (dir === 'neutral' && chinDir !== 'neutral' && chin.unifiedConfidence >= 70) {
+    dir = chinDir;
+  }
+  // Confidence blended: 60% Waides KI verdict + 40% Chinnikstah unified
+  const blendedConfidence = Math.round(signal.confidencePercent * 0.6 + chin.unifiedConfidence * 0.4);
 
   // Base ATR-ish %: scales with timeframe
   const tfFactor: Record<TredTimeframe, number> = {
@@ -119,7 +138,7 @@ export function expandSignal(
     signal_id: signal.id,
     engine, asset: signal.asset, timeframe,
     bias: dir,
-    confidencePercent: signal.confidencePercent,
+    confidencePercent: blendedConfidence,
     entry: +entry.toFixed(entry < 10 ? 5 : 2),
     stopLoss: +stopLoss.toFixed(entry < 10 ? 5 : 2),
     takeProfit: +takeProfit.toFixed(entry < 10 ? 5 : 2),
@@ -129,14 +148,17 @@ export function expandSignal(
     forecastHorizon: profile.horizon,
     historicalAccuracy: histAcc,
     executionStatus: dir === 'neutral' ? 'frozen' : 'pending',
-    kiAgreement: dir === 'neutral' ? 'KI: holding — no execution' : 'KI: aligned — execute',
+    kiAgreement:
+      dir === 'neutral'
+        ? `KI+Chinni hold — regime ${chin.state}, harmony ${chin.harmonyIndex}%`
+        : `KI+Chinni aligned ${chinDir.toUpperCase()} — harmony ${chin.harmonyIndex}%`,
     konslangStatement:
       dir === 'neutral'
-        ? `${engine} stands silent. The field is unaligned.`
-        : `${engine} reads ${dir.toUpperCase()} on ${signal.asset} (${timeframe}). Execute with R:R ${rr}.`,
+        ? `${engine} stands silent. Chinnikstah harmony ${chin.harmonyIndex}% — field unaligned.`
+        : `${engine} reads ${dir.toUpperCase()} on ${signal.asset} (${timeframe}). Chinni ${chin.direction} • R:R ${rr}.`,
     outputs: {
       'Asset': signal.asset, 'Timeframe': timeframe, 'Engine': engine,
-      'Bias': dir, 'Confidence': `${signal.confidencePercent}%`,
+      'Bias': dir, 'Confidence': `${blendedConfidence}%`,
       'Entry': entry, 'Stop Loss': stopLoss, 'Take Profit': takeProfit,
       'Risk/Reward': rr, 'Trend': trend, 'Momentum': momentum,
       'Volatility': volatility, 'Liquidity': liquidity,
@@ -144,6 +166,10 @@ export function expandSignal(
       'Historical Accuracy': `${histAcc}%`,
       'Execution Status': dir === 'neutral' ? 'frozen' : 'pending',
       'KI Agreement': dir === 'neutral' ? 'hold' : 'execute',
+      'Chinnikstah Direction': chin.direction,
+      'Chinnikstah Harmony': `${chin.harmonyIndex}%`,
+      'Chinnikstah Regime': chin.state,
+      'Chinnikstah Phase': chin.phase,
     },
   };
 }
@@ -160,6 +186,15 @@ export async function processTredbeing(
   if (!ok) return null;
 
   const exp = expandSignal(signal, engine, timeframe);
+
+  // ───── Waides KI signal-verification gate.
+  // Reject weak or contradictory expansions — only validated signals reach users.
+  const MIN_CONFIDENCE = 65;
+  if (exp.bias !== 'neutral' && exp.confidencePercent < MIN_CONFIDENCE) {
+    exp.executionStatus = 'frozen';
+    exp.bias = 'neutral';
+    exp.kiAgreement = `KI rejected — confidence ${exp.confidencePercent}% < ${MIN_CONFIDENCE}%`;
+  }
 
   // Persist tredbeing signal
   let savedId: string | undefined;
