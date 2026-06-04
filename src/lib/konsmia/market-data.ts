@@ -1,6 +1,6 @@
 import type { MarketData } from './types';
 import { supabase } from '@/integrations/supabase/client';
-import { setLivePrice } from './live-prices';
+import { setLivePrice, broadcastLivePrices } from './live-prices';
 
 const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
 
@@ -34,6 +34,7 @@ export async function fetchCryptoData(): Promise<MarketData[]> {
         setLivePrice(`${m.symbol}/USD`, m.price);
       });
       lastFetchTime = now;
+      broadcastLivePrices();
       return mapped;
     }
   } catch (e) {
@@ -69,6 +70,7 @@ export async function fetchCryptoData(): Promise<MarketData[]> {
       setLivePrice(`${m.symbol}/USD`, m.price);
     });
     lastFetchTime = now;
+    broadcastLivePrices();
     return mapped;
   } catch (err) {
     console.error('CoinGecko fetch failed:', err);
