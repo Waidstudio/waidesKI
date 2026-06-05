@@ -9,6 +9,8 @@ import { getLivePrice } from './live-prices';
 import { openSandboxTrade, classifyAsset } from './sandbox-engine';
 import { generateChinnikstah, type ChinnikstahTimeframe } from './chinnikstah-engine';
 import type { WaidesSignal, TradePlan, Timeframe } from './types';
+import { getCandles } from './candle-store';
+import { trendScore, momentumScore, volumeScore, atr as atrFn, adx, liquidityScore } from './indicators';
 
 export type TredEngine =
   | 'WaidBot' | 'WaidBot Pro' | 'TredFlux' | 'TredSpot'
@@ -25,17 +27,44 @@ export const TRED_TIMEFRAMES = [
 ] as const;
 export type TredTimeframe = typeof TRED_TIMEFRAMES[number];
 
+export interface EngineWeights {
+  trend: number; momentum: number; volume: number; liquidity: number; adx: number;
+}
+
 export const ENGINE_PROFILE: Record<TredEngine, {
   nature: string; speed: 'slow' | 'medium' | 'high' | 'aggressive';
   slMultiplier: number; tpMultiplier: number; biasShift: number; horizon: string;
+  weights: EngineWeights;  // each engine reads candles through its own lens
 }> = {
-  'WaidBot':     { nature: 'Reactive — fast crypto layer', speed: 'high',       slMultiplier: 0.7, tpMultiplier: 1.2, biasShift: 0,  horizon: '5m → 48h' },
-  'WaidBot Pro': { nature: 'Predictive macro stability',   speed: 'slow',       slMultiplier: 1.6, tpMultiplier: 2.4, biasShift: 0,  horizon: '24h → 1M' },
-  'TredFlux':    { nature: 'UP/DOWN volatility engine',    speed: 'aggressive', slMultiplier: 1.0, tpMultiplier: 1.8, biasShift: 0,  horizon: '30m → 3D' },
-  'TredSpot':    { nature: 'Spot accumulation / breakout', speed: 'medium',     slMultiplier: 1.2, tpMultiplier: 2.0, biasShift: 0,  horizon: '30m → 7D' },
-  'TredGem':     { nature: 'Forex liquidity / sessions',   speed: 'medium',     slMultiplier: 0.9, tpMultiplier: 1.6, biasShift: 0,  horizon: '5m → 2W' },
-  'TredGaze':    { nature: 'Stocks event-driven',          speed: 'slow',       slMultiplier: 1.3, tpMultiplier: 2.2, biasShift: 0,  horizon: '5m → 2W' },
+  'WaidBot':     { nature: 'Reactive — fast crypto layer', speed: 'high',       slMultiplier: 0.7, tpMultiplier: 1.2, biasShift: 0,  horizon: '5m → 48h',
+                   weights: { trend: 0.15, momentum: 0.40, volume: 0.25, liquidity: 0.10, adx: 0.10 } },
+  'WaidBot Pro': { nature: 'Predictive macro stability',   speed: 'slow',       slMultiplier: 1.6, tpMultiplier: 2.4, biasShift: 0,  horizon: '24h → 1M',
+                   weights: { trend: 0.45, momentum: 0.15, volume: 0.10, liquidity: 0.15, adx: 0.15 } },
+  'TredFlux':    { nature: 'UP/DOWN volatility engine',    speed: 'aggressive', slMultiplier: 1.0, tpMultiplier: 1.8, biasShift: 0,  horizon: '30m → 3D',
+                   weights: { trend: 0.20, momentum: 0.30, volume: 0.30, liquidity: 0.10, adx: 0.10 } },
+  'TredSpot':    { nature: 'Spot accumulation / breakout', speed: 'medium',     slMultiplier: 1.2, tpMultiplier: 2.0, biasShift: 0,  horizon: '30m → 7D',
+                   weights: { trend: 0.30, momentum: 0.20, volume: 0.25, liquidity: 0.20, adx: 0.05 } },
+  'TredGem':     { nature: 'Forex liquidity / sessions',   speed: 'medium',     slMultiplier: 0.9, tpMultiplier: 1.6, biasShift: 0,  horizon: '5m → 2W',
+                   weights: { trend: 0.25, momentum: 0.20, volume: 0.05, liquidity: 0.35, adx: 0.15 } },
+  'TredGaze':    { nature: 'Stocks event-driven',          speed: 'slow',       slMultiplier: 1.3, tpMultiplier: 2.2, biasShift: 0,  horizon: '5m → 2W',
+                   weights: { trend: 0.30, momentum: 0.25, volume: 0.25, liquidity: 0.10, adx: 0.10 } },
 };
+
+/** Score the asset through this engine's specific lens (−100..100). */
+export function engineLensScore(engine: TredEngine, asset: string, timeframe: string = '1h'): number {
+  const profile = ENGINE_PROFILE[engine];
+  const w = profile.weights;
+  const candles = getCandles(asset, timeframe);
+  if (candles.length < 30) return 0;
+  const closes = candles.map(c => c.c);
+  const t = trendScore(closes);
+  const m = momentumScore(closes).score;
+  const v = volumeScore(candles);
+  const l = liquidityScore(candles) - 50; // re-center to -50..50
+  const a = adx(candles, 14);
+  const aScaled = (a - 25) * 2; // ADX>25 trending bullish-flavoured signal
+  return Math.round(t * w.trend + m * w.momentum + v * w.volume + l * w.liquidity + aScaled * w.adx);
+}
 
 export interface TredbeingExpansion {
   id?: string;
@@ -76,6 +105,17 @@ export function expandSignal(
   let dir: 'long' | 'short' | 'neutral' =
     signal.verdict.action === 'buy' ? 'long' :
     signal.verdict.action === 'sell' ? 'short' : 'neutral';
+
+  // Engine's own lens may override the upstream KI direction when the engine
+  // strongly disagrees AND the engine is reading real candle data.
+  const lens = engineLensScore(engine, signal.asset, '1h');
+  const lensDir: 'long' | 'short' | 'neutral' =
+    lens > 25 ? 'long' : lens < -25 ? 'short' : 'neutral';
+  if (lensDir !== 'neutral' && dir !== 'neutral' && lensDir !== dir && Math.abs(lens) > 40) {
+    dir = 'neutral'; // engine veto — disagreement strong enough to freeze
+  } else if (dir === 'neutral' && lensDir !== 'neutral' && Math.abs(lens) > 35) {
+    dir = lensDir;   // engine surfaces a signal the upstream missed
+  }
 
   // ───── Smai Chinnikstah = central intelligence layer for every TredBeing.
   // Tredbeings MUST align with Chinnikstah's market truth before generating a signal.
