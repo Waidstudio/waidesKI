@@ -78,12 +78,14 @@ export interface TradePlan {
   stopLoss: number;
   takeProfit1: number;
   takeProfit2: number;
+  takeProfit3?: number;
   riskRewardRatio: number;
   startTimeUTC: string;       // ISO HH:MM UTC when window opens
   expectedDuration: string;   // human readable
   invalidationPrice: number;
   positionSizingHint: string; // e.g. "Risk 1% of capital"
   notes: string;
+  rationale?: string;          // why these exact levels exist
 }
 
 export interface KIVerdict {
@@ -97,6 +99,17 @@ export interface KIVerdict {
   confluenceSummary: string;
   noTradeReason?: string;
   noTradeMissing?: string[];
+}
+
+export interface ConfidenceBreakdown {
+  trend: number;
+  momentum: number;
+  volume: number;
+  liquidity: number;
+  historical: number;
+  alignment: number;
+  final: number;
+  formula: string;
 }
 
 export interface WaidesSignal {
@@ -123,6 +136,9 @@ export interface WaidesSignal {
   multiTimeframeAligned: boolean;
   tradePlans?: TradePlan[];
   livePrice?: number;
+  confidenceBreakdown?: ConfidenceBreakdown;
+  dataSource?: 'live_candles' | 'price_only' | 'synthetic';
+  lifecycleState?: 'pending' | 'active' | 'triggered' | 'partial' | 'won' | 'lost' | 'expired';
 }
 
 export interface Tredbeing {

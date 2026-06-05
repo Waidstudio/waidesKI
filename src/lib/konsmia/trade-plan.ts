@@ -1,4 +1,6 @@
 import type { TradePlan, Timeframe, MicroAnalysis } from './types';
+import { getCandles } from './candle-store';
+import { atr as atrFn, nearestLevels } from './indicators';
 
 const TF_CONFIG: Record<Timeframe, { atrMult: number; tpMult: number; durationH: number; label: string }> = {
   '3m':  { atrMult: 0.0025, tpMult: 1.6, durationH: 0.25, label: '15-30 min' },
@@ -6,6 +8,10 @@ const TF_CONFIG: Record<Timeframe, { atrMult: number; tpMult: number; durationH:
   '1h':  { atrMult: 0.012,  tpMult: 2.0, durationH: 4,    label: '4-8 hours' },
   '4h':  { atrMult: 0.025,  tpMult: 2.5, durationH: 16,   label: '12-24 hours' },
   '1d':  { atrMult: 0.05,   tpMult: 3.0, durationH: 72,   label: '2-5 days' },
+};
+
+const TF_TO_CANDLE: Record<Timeframe, string> = {
+  '3m': '15m', '15m': '15m', '1h': '1h', '4h': '4h', '1d': '1d',
 };
 
 function nextSessionStartUTC(tfHours: number): string {
@@ -46,12 +52,36 @@ export function buildTradePlans(
 
   return timeframes.map((tf) => {
     const cfg = TF_CONFIG[tf];
-    const atr = livePrice * cfg.atrMult;
-    const entry = direction === 'long' ? livePrice - atr * 0.25 : livePrice + atr * 0.25;
-    const stopLoss = direction === 'long' ? entry - atr : entry + atr;
-    const tp1 = direction === 'long' ? entry + atr * cfg.tpMult : entry - atr * cfg.tpMult;
-    const tp2 = direction === 'long' ? entry + atr * cfg.tpMult * 1.6 : entry - atr * cfg.tpMult * 1.6;
-    const rr = Math.round(((Math.abs(tp1 - entry) / Math.abs(entry - stopLoss))) * 10) / 10;
+    // Real ATR + structural levels when candles available; fall back to %-multiplier.
+    const candles = getCandles(asset, TF_TO_CANDLE[tf]);
+    const realAtr = candles.length >= 20 ? atrFn(candles, 14) : 0;
+    const a = realAtr > 0 ? realAtr : livePrice * cfg.atrMult;
+    const levels = candles.length >= 20
+      ? nearestLevels(candles, livePrice)
+      : { support: micro.keyLevels.support, resistance: micro.keyLevels.resistance };
+
+    // Entry: pullback into structure (0.25 ATR off live), capped by nearest level.
+    let entry = direction === 'long' ? livePrice - a * 0.25 : livePrice + a * 0.25;
+    if (direction === 'long' && levels.support[0]) {
+      entry = Math.max(entry, levels.support[0] * 1.001);
+    } else if (direction === 'short' && levels.resistance[0]) {
+      entry = Math.min(entry, levels.resistance[0] * 0.999);
+    }
+
+    // Stop loss: 1 ATR beyond structural invalidation.
+    const structSL = direction === 'long'
+      ? (levels.support[1] ?? levels.support[0] ?? entry) - a * 0.5
+      : (levels.resistance[1] ?? levels.resistance[0] ?? entry) + a * 0.5;
+    const stopLoss = direction === 'long'
+      ? Math.min(entry - a, structSL)
+      : Math.max(entry + a, structSL);
+
+    // Take profits: structural targets when present, else ATR multiples.
+    const risk = Math.abs(entry - stopLoss);
+    const tp1 = direction === 'long' ? entry + risk * cfg.tpMult : entry - risk * cfg.tpMult;
+    const tp2 = direction === 'long' ? entry + risk * cfg.tpMult * 1.6 : entry - risk * cfg.tpMult * 1.6;
+    const tp3 = direction === 'long' ? entry + risk * cfg.tpMult * 2.4 : entry - risk * cfg.tpMult * 2.4;
+    const rr = Math.round((risk > 0 ? Math.abs(tp1 - entry) / risk : 0) * 10) / 10;
     const start = nextSessionStartUTC(cfg.durationH);
     const invalidation = direction === 'long' ? micro.keyLevels.support[1] ?? stopLoss : micro.keyLevels.resistance[1] ?? stopLoss;
 
@@ -61,6 +91,11 @@ export function buildTradePlans(
         ? 'Risk 1% of capital — moderate'
         : 'Risk 0.5% of capital — exploratory';
 
+    const fmt = (n: number) => n.toFixed(n < 10 ? 5 : 2);
+    const rationale = candles.length >= 20
+      ? `ATR(14)=${fmt(a)} on ${TF_TO_CANDLE[tf]}. Entry pulled to nearest swing ${direction === 'long' ? 'support' : 'resistance'} at ${fmt(direction === 'long' ? levels.support[0] : levels.resistance[0])}. SL placed 1 ATR beyond structural invalidation (${fmt(structSL)}). TP1/2/3 at ${cfg.tpMult}/${(cfg.tpMult*1.6).toFixed(1)}/${(cfg.tpMult*2.4).toFixed(1)}× risk.`
+      : `No live candles yet for ${asset} ${TF_TO_CANDLE[tf]} — using ATR proxy ${(cfg.atrMult*100).toFixed(2)}%.`;
+
     return {
       timeframe: tf,
       direction,
@@ -68,12 +103,14 @@ export function buildTradePlans(
       stopLoss,
       takeProfit1: tp1,
       takeProfit2: tp2,
+      takeProfit3: tp3,
       riskRewardRatio: rr,
       startTimeUTC: start,
       expectedDuration: `${cfg.label} • window closes ~${endTimeUTC(cfg.durationH, start)}`,
       invalidationPrice: invalidation,
       positionSizingHint: sizing,
-      notes: `${asset} ${direction.toUpperCase()} on ${tf}: enter near ${entry.toFixed(entry < 10 ? 4 : 2)}, invalidate below ${stopLoss.toFixed(stopLoss < 10 ? 4 : 2)}.`,
+      notes: `${asset} ${direction.toUpperCase()} on ${tf}: enter near ${fmt(entry)}, invalidate at ${fmt(stopLoss)}.`,
+      rationale,
     };
   });
 }
