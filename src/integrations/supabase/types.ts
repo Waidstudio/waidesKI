@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          asset: string | null
+          created_at: string
+          id: string
+          kind: string
+          message: string
+          payload: Json | null
+          read: boolean
+          severity: string
+          signal_id: string | null
+          title: string
+        }
+        Insert: {
+          asset?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          message: string
+          payload?: Json | null
+          read?: boolean
+          severity?: string
+          signal_id?: string | null
+          title: string
+        }
+        Update: {
+          asset?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string
+          payload?: Json | null
+          read?: boolean
+          severity?: string
+          signal_id?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      candle_cache: {
+        Row: {
+          asset: string
+          candles: Json
+          source: string | null
+          timeframe: string
+          updated_at: string
+        }
+        Insert: {
+          asset: string
+          candles: Json
+          source?: string | null
+          timeframe: string
+          updated_at?: string
+        }
+        Update: {
+          asset?: string
+          candles?: Json
+          source?: string | null
+          timeframe?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -313,6 +376,42 @@ export type Database = {
         }
         Relationships: []
       }
+      signal_versions: {
+        Row: {
+          asset: string
+          bias: string
+          confidence_percent: number
+          created_at: string
+          id: string
+          overall_score: number
+          signal_id: string
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          asset: string
+          bias: string
+          confidence_percent: number
+          created_at?: string
+          id?: string
+          overall_score: number
+          signal_id: string
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          asset?: string
+          bias?: string
+          confidence_percent?: number
+          created_at?: string
+          id?: string
+          overall_score?: number
+          signal_id?: string
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: []
+      }
       signals: {
         Row: {
           action: string
@@ -320,14 +419,18 @@ export type Database = {
           asset: string
           bias: string
           confidence: string
+          confidence_breakdown: Json | null
           confidence_percent: number
           confluence_summary: string | null
           correlation: Json | null
           created_at: string
           direction: string
           entry_precision: Json | null
+          expires_at: string | null
           id: string
+          lifecycle_state: string
           liquidity: Json | null
+          live_price: number | null
           macro: Json | null
           micro: Json | null
           multi_timeframe_aligned: boolean | null
@@ -335,11 +438,15 @@ export type Database = {
           overall_score: number
           psychological: Json | null
           reasoning: string | null
+          resolution_price: number | null
+          resolved_at: string | null
           risk_level: string
           signal_id: string
           soul_voice: string | null
           temporal: Json | null
           time_window: Json | null
+          trade_plans: Json | null
+          version: number
         }
         Insert: {
           action: string
@@ -347,14 +454,18 @@ export type Database = {
           asset: string
           bias: string
           confidence: string
+          confidence_breakdown?: Json | null
           confidence_percent: number
           confluence_summary?: string | null
           correlation?: Json | null
           created_at?: string
           direction: string
           entry_precision?: Json | null
+          expires_at?: string | null
           id?: string
+          lifecycle_state?: string
           liquidity?: Json | null
+          live_price?: number | null
           macro?: Json | null
           micro?: Json | null
           multi_timeframe_aligned?: boolean | null
@@ -362,11 +473,15 @@ export type Database = {
           overall_score: number
           psychological?: Json | null
           reasoning?: string | null
+          resolution_price?: number | null
+          resolved_at?: string | null
           risk_level: string
           signal_id: string
           soul_voice?: string | null
           temporal?: Json | null
           time_window?: Json | null
+          trade_plans?: Json | null
+          version?: number
         }
         Update: {
           action?: string
@@ -374,14 +489,18 @@ export type Database = {
           asset?: string
           bias?: string
           confidence?: string
+          confidence_breakdown?: Json | null
           confidence_percent?: number
           confluence_summary?: string | null
           correlation?: Json | null
           created_at?: string
           direction?: string
           entry_precision?: Json | null
+          expires_at?: string | null
           id?: string
+          lifecycle_state?: string
           liquidity?: Json | null
+          live_price?: number | null
           macro?: Json | null
           micro?: Json | null
           multi_timeframe_aligned?: boolean | null
@@ -389,11 +508,15 @@ export type Database = {
           overall_score?: number
           psychological?: Json | null
           reasoning?: string | null
+          resolution_price?: number | null
+          resolved_at?: string | null
           risk_level?: string
           signal_id?: string
           soul_voice?: string | null
           temporal?: Json | null
           time_window?: Json | null
+          trade_plans?: Json | null
+          version?: number
         }
         Relationships: []
       }
