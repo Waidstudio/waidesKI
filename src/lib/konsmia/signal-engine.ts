@@ -440,6 +440,31 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
   const livePrice = getLivePrice(asset) ?? micro.keyLevels.support[0] * 1.005;
   const tradePlans = buildTradePlans(asset, livePrice, micro, overallScore, confidencePercent);
 
+  // ===== CONFIDENCE BREAKDOWN — auditable contribution of each layer =====
+  const candles = getCandles(asset, '1h');
+  const dataSource: 'live_candles' | 'price_only' | 'synthetic' =
+    candles.length >= 50 ? 'live_candles' : getLivePrice(asset) ? 'price_only' : 'synthetic';
+  const trendContrib = candles.length >= 50 ? Math.abs(trendScore(candles.map(c => c.c))) : Math.abs(micro.score);
+  const momentumContrib = candles.length >= 30 ? Math.abs(momentumScore(candles.map(c => c.c)).score) : Math.abs(psychological.score);
+  const volumeContrib = candles.length >= 20 ? Math.abs(volumeScore(candles)) : Math.abs(liquidity.score) * 0.6;
+  const liquidityContrib = liquidity.liquidityScore;
+  const historicalContrib = mtfAligned ? 85 : 55;
+  const alignmentContrib = 100 - noTradeReasons.length * 25;
+  const breakdownFinal = Math.round(
+    trendContrib * 0.25 + momentumContrib * 0.20 + volumeContrib * 0.15 +
+    liquidityContrib * 0.15 + historicalContrib * 0.15 + alignmentContrib * 0.10
+  );
+  const confidenceBreakdown: ConfidenceBreakdown = {
+    trend: Math.round(trendContrib),
+    momentum: Math.round(momentumContrib),
+    volume: Math.round(volumeContrib),
+    liquidity: Math.round(liquidityContrib),
+    historical: Math.round(historicalContrib),
+    alignment: Math.round(alignmentContrib),
+    final: Math.max(0, Math.min(100, breakdownFinal)),
+    formula: 'trend·0.25 + momentum·0.20 + volume·0.15 + liquidity·0.15 + historical·0.15 + alignment·0.10',
+  };
+
   // Stable ID per (asset, 5-minute bucket) so React keys don't churn between refreshes
   const bucket = Math.floor(Date.now() / (5 * 60_000));
   return {
@@ -466,6 +491,9 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
     multiTimeframeAligned: mtfAligned,
     tradePlans,
     livePrice,
+    confidenceBreakdown,
+    dataSource,
+    lifecycleState: 'pending',
   };
 }
 
