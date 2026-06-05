@@ -7,6 +7,7 @@ import { EntryPrecisionCard } from '@/components/EntryPrecisionCard';
 import { ConfluenceSummaryCard } from '@/components/ConfluenceSummaryCard';
 import { RiskNoteCard } from '@/components/RiskNoteCard';
 import { NoTradePanel } from '@/components/NoTradePanel';
+import { ConfidenceBreakdownCard } from '@/components/ConfidenceBreakdownCard';
 import { generateSignal, getConfidenceThreshold } from '@/lib/konsmia/signal-engine';
 import type { WaidesSignal, KIMode } from '@/lib/konsmia/types';
 
@@ -61,6 +62,15 @@ export default function Signals() {
               <TerminalCard title="CONFLUENCE">
                 <ConfluenceSummaryCard signal={selectedSignal} />
               </TerminalCard>
+
+              {selectedSignal.confidenceBreakdown && (
+                <TerminalCard title="CONFIDENCE MATH">
+                  <ConfidenceBreakdownCard
+                    breakdown={selectedSignal.confidenceBreakdown}
+                    source={selectedSignal.dataSource}
+                  />
+                </TerminalCard>
+              )}
 
               {selectedSignal.bias !== 'no_trade' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

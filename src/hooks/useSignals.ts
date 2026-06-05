@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { generateSignal } from '@/lib/konsmia/signal-engine';
 import { supabase } from '@/integrations/supabase/client';
 import type { WaidesSignal, KIMode } from '@/lib/konsmia/types';
+import { warmCandles, subscribeCandles } from '@/lib/konsmia/candle-store';
 
 interface UseSignalsOptions {
   assets?: string[];
@@ -75,6 +76,11 @@ export function useSignals(options: UseSignalsOptions = {}): SignalState {
           liquidity: signal.liquidity as any,
           correlation: signal.correlation as any,
           multi_timeframe_aligned: signal.multiTimeframeAligned,
+          confidence_breakdown: signal.confidenceBreakdown as any,
+          trade_plans: signal.tradePlans as any,
+          live_price: signal.livePrice,
+          lifecycle_state: signal.lifecycleState ?? 'pending',
+          expires_at: new Date(Date.now() + 24*60*60*1000).toISOString(),
         }, { onConflict: 'signal_id' });
       } catch (e) {
         console.warn('Failed to persist signal:', e);
@@ -102,6 +108,14 @@ export function useSignals(options: UseSignalsOptions = {}): SignalState {
   useEffect(() => {
     generate();
   }, [generate]);
+
+  // Warm real candle data for every tracked asset so subsequent signal
+  // generations use the real indicator engine instead of fallback noise.
+  useEffect(() => {
+    warmCandles(assets, '1h');
+    const unsub = subscribeCandles(() => generate());
+    return unsub;
+  }, [assets, generate]);
 
   useEffect(() => {
     if (!autoRefresh) return;

@@ -3,10 +3,16 @@ import type {
   MacroAnalysis, MicroAnalysis, PsychologicalAnalysis, TemporalAnalysis,
   LiquidityAnalysis, CorrelationAnalysis, TimeWindow, EntryPrecision,
   Tredbeing, NiuzArticle, Sentiment, SessionType, KIMode,
+  ConfidenceBreakdown,
 } from './types';
 import { checkEthicalAlignment, checkGovernance, getDataFlowStatus } from './modules';
 import { getLivePrice } from './live-prices';
 import { buildTradePlans } from './trade-plan';
+import { getCandles, fetchCandlesAsync } from './candle-store';
+import {
+  trendScore, momentumScore, volumeScore, volatilityPct,
+  liquidityScore as liquidityFromCandles, nearestLevels, adx, atr,
+} from './indicators';
 
 // ===== DETERMINISTIC SEEDED RNG =====
 // Returns a stable pseudo-random in [0,1) for a given (asset, layer) within the
@@ -77,22 +83,38 @@ function generateMacro(asset: string): MacroAnalysis {
 function generateMicro(asset: string): MicroAnalysis {
   const fallback = asset.includes('BTC') ? 67000 : asset.includes('ETH') ? 3500 : asset.includes('SOL') ? 145 : asset.includes('EUR') ? 1.08 : asset.includes('GBP') ? 1.27 : asset.includes('JPY') ? 151.3 : asset.includes('AAPL') ? 230 : asset.includes('TSLA') ? 250 : asset.includes('NVDA') ? 140 : 1.0;
   const basePrice = getLivePrice(asset) ?? fallback;
-  const volMultiplier = getSessionVolatilityMultiplier();
-  const rnd = bucketSeed(asset, 'micro');
-  // Score influenced by session volatility
-  const rawScore = (rnd() - 0.5) * 100;
-  const score = Math.round(rawScore * volMultiplier);
-
-  const supportSpread = asset.includes('BTC') ? 0.03 : asset.includes('ETH') ? 0.03 : 0.005;
+  const candles = getCandles(asset, '1h');
+  let score: number;
+  let support: number[];
+  let resistance: number[];
+  let structureLabel: string;
+  if (candles.length >= 50) {
+    const closes = candles.map(c => c.c);
+    const t = trendScore(closes);
+    const a = adx(candles, 14);
+    // Micro score blends trend direction with ADX strength (0..100 → 0..1)
+    score = Math.round(t * Math.min(1, a / 35));
+    const lvls = nearestLevels(candles, basePrice);
+    support = lvls.support;
+    resistance = lvls.resistance;
+    structureLabel = score > 20 ? `HH/HL — ADX ${a.toFixed(0)} trending` : score < -20 ? `LH/LL — ADX ${a.toFixed(0)} bearish` : `Range — ADX ${a.toFixed(0)} sideways`;
+  } else {
+    const volMultiplier = getSessionVolatilityMultiplier();
+    const rnd = bucketSeed(asset, 'micro');
+    score = Math.round((rnd() - 0.5) * 100 * volMultiplier);
+    const supportSpread = asset.includes('BTC') ? 0.03 : asset.includes('ETH') ? 0.03 : 0.005;
+    support = [basePrice * (1 - supportSpread), basePrice * (1 - supportSpread * 1.5)];
+    resistance = [basePrice * (1 + supportSpread), basePrice * (1 + supportSpread * 1.5)];
+    structureLabel = score > 20 ? 'HH/HL — Bullish' : score < -20 ? 'LH/LL — Bearish' : 'Consolidation';
+    // Trigger background fetch so next regen has candles
+    fetchCandlesAsync(asset, '1h');
+  }
   return {
     priceAction: score > 20 ? 'Higher highs and higher lows forming — bullish structure intact' : score < -20 ? 'Lower highs and lower lows — bearish structure developing' : 'Range-bound consolidation — no clear direction',
     liquidityZones: ['Previous daily high', 'Weekly open level', 'Prior session low', 'Monthly pivot'],
     orderFlow: score > 0 ? 'Aggressive buyers stepping in at support — absorption visible' : 'Sellers absorbing buying pressure at resistance',
-    keyLevels: {
-      support: [basePrice * (1 - supportSpread), basePrice * (1 - supportSpread * 1.5)],
-      resistance: [basePrice * (1 + supportSpread), basePrice * (1 + supportSpread * 1.5)],
-    },
-    marketStructure: score > 20 ? 'HH/HL — Bullish' : score < -20 ? 'LH/LL — Bearish' : 'Consolidation',
+    keyLevels: { support, resistance },
+    marketStructure: structureLabel,
     score: Math.max(-100, Math.min(100, score)),
   };
 }
@@ -148,9 +170,19 @@ function generateTemporal(asset: string): TemporalAnalysis {
 function generateLiquidity(asset: string): LiquidityAnalysis {
   const fallback = asset.includes('BTC') ? 67000 : asset.includes('ETH') ? 3500 : asset.includes('SOL') ? 145 : asset.includes('AAPL') ? 230 : asset.includes('TSLA') ? 250 : 1.08;
   const basePrice = getLivePrice(asset) ?? fallback;
-  const volMult = getSessionVolatilityMultiplier();
-  const rnd = bucketSeed(asset, 'liquidity');
-  const score = Math.round((rnd() - 0.5) * 80 * volMult);
+  const candles = getCandles(asset, '1h');
+  let score: number;
+  let liqRaw: number;
+  if (candles.length >= 20) {
+    liqRaw = liquidityFromCandles(candles); // 0..100 depth
+    const v = volumeScore(candles);          // -100..100 directional
+    score = Math.round(v * Math.min(1, liqRaw / 50));
+  } else {
+    const volMult = getSessionVolatilityMultiplier();
+    const rnd = bucketSeed(asset, 'liquidity');
+    score = Math.round((rnd() - 0.5) * 80 * volMult);
+    liqRaw = Math.abs(score);
+  }
 
   return {
     stopHuntZones: [
@@ -164,7 +196,7 @@ function generateLiquidity(asset: string): LiquidityAnalysis {
     trapZones: [
       `${(basePrice * 0.99).toFixed(2)}-${(basePrice * 1.01).toFixed(2)} — false breakout zone`,
     ],
-    liquidityScore: Math.abs(score),
+    liquidityScore: Math.round(liqRaw),
     score: Math.max(-100, Math.min(100, score)),
   };
 }
@@ -408,6 +440,31 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
   const livePrice = getLivePrice(asset) ?? micro.keyLevels.support[0] * 1.005;
   const tradePlans = buildTradePlans(asset, livePrice, micro, overallScore, confidencePercent);
 
+  // ===== CONFIDENCE BREAKDOWN — auditable contribution of each layer =====
+  const candles = getCandles(asset, '1h');
+  const dataSource: 'live_candles' | 'price_only' | 'synthetic' =
+    candles.length >= 50 ? 'live_candles' : getLivePrice(asset) ? 'price_only' : 'synthetic';
+  const trendContrib = candles.length >= 50 ? Math.abs(trendScore(candles.map(c => c.c))) : Math.abs(micro.score);
+  const momentumContrib = candles.length >= 30 ? Math.abs(momentumScore(candles.map(c => c.c)).score) : Math.abs(psychological.score);
+  const volumeContrib = candles.length >= 20 ? Math.abs(volumeScore(candles)) : Math.abs(liquidity.score) * 0.6;
+  const liquidityContrib = liquidity.liquidityScore;
+  const historicalContrib = mtfAligned ? 85 : 55;
+  const alignmentContrib = 100 - noTradeReasons.length * 25;
+  const breakdownFinal = Math.round(
+    trendContrib * 0.25 + momentumContrib * 0.20 + volumeContrib * 0.15 +
+    liquidityContrib * 0.15 + historicalContrib * 0.15 + alignmentContrib * 0.10
+  );
+  const confidenceBreakdown: ConfidenceBreakdown = {
+    trend: Math.round(trendContrib),
+    momentum: Math.round(momentumContrib),
+    volume: Math.round(volumeContrib),
+    liquidity: Math.round(liquidityContrib),
+    historical: Math.round(historicalContrib),
+    alignment: Math.round(alignmentContrib),
+    final: Math.max(0, Math.min(100, breakdownFinal)),
+    formula: 'trend·0.25 + momentum·0.20 + volume·0.15 + liquidity·0.15 + historical·0.15 + alignment·0.10',
+  };
+
   // Stable ID per (asset, 5-minute bucket) so React keys don't churn between refreshes
   const bucket = Math.floor(Date.now() / (5 * 60_000));
   return {
@@ -434,6 +491,9 @@ export function generateSignal(asset: string, mode: KIMode = 'balanced'): Waides
     multiTimeframeAligned: mtfAligned,
     tradePlans,
     livePrice,
+    confidenceBreakdown,
+    dataSource,
+    lifecycleState: 'pending',
   };
 }
 
