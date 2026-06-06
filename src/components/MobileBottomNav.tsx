@@ -22,12 +22,12 @@ function MobileBottomNavImpl() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 sm:hidden pointer-events-none"
+      className="sticky bottom-0 left-0 right-0 z-40 sm:hidden bg-black border-t border-[hsl(0_0%_12%)] shrink-0"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       aria-label="Primary mobile navigation"
     >
-      <div className="pointer-events-auto mx-4 mb-2 rounded-full bg-black/95 border border-[hsl(185_100%_55%/0.25)] shadow-[0_0_16px_-6px_hsl(185_100%_55%/0.4)]">
-        <ul className="flex items-center justify-between px-2 h-11">
+      <div>
+        <ul className="flex items-center justify-between px-2 h-12">
           {navItems.map((item) => {
             const active = item.path === '/' ? pathname === '/' : pathname === item.path;
             const Icon = item.icon;
