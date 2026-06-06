@@ -108,7 +108,7 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const loadedEntities = useRef<Set<EntityId>>(new Set());
+  const loadedEntities = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
