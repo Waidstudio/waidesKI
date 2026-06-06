@@ -2,10 +2,37 @@ import { TerminalCard } from '@/components/TerminalCard';
 import { UserIntelligencePanel } from '@/components/UserIntelligencePanel';
 import { AdaptiveAlertCard } from '@/components/AdaptiveAlertCard';
 import { generateUserProfile } from '@/lib/konsmia/quantum-engine';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogIn, LogOut } from 'lucide-react';
 
 export default function UserProfile() {
   const profile = useMemo(() => generateUserProfile(), []);
+  const navigate = useNavigate();
+  const [user, setUser] = useState<{ email?: string | null; display_name?: string | null } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (!u) {
+        if (!cancelled) setUser(null);
+        return;
+      }
+      const { data: p } = await supabase.from('profiles').select('display_name').eq('id', u.id).maybeSingle();
+      if (!cancelled) setUser({ email: u.email, display_name: p?.display_name ?? null });
+    };
+    load();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => load());
+    return () => { cancelled = true; sub.subscription.unsubscribe(); };
+  }, []);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -13,6 +40,29 @@ export default function UserProfile() {
         <h1 className="text-lg sm:text-xl font-display font-bold text-foreground">User Intelligence</h1>
         <p className="text-xs text-muted-foreground font-mono">Behavioral analysis • Adaptive coaching • Personal risk profile</p>
       </div>
+
+      <TerminalCard title="ACCOUNT">
+        {user ? (
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-sm text-foreground font-semibold">{user.display_name || 'Trader'}</p>
+              <p className="text-[11px] text-muted-foreground font-mono">{user.email}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={signOut} className="font-mono text-[11px]">
+              <LogOut className="h-3 w-3 mr-1.5" /> Sign out
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs text-muted-foreground">You are browsing as guest.</p>
+            <Link to="/auth">
+              <Button size="sm" className="font-mono text-[11px]">
+                <LogIn className="h-3 w-3 mr-1.5" /> Sign in / Register
+              </Button>
+            </Link>
+          </div>
+        )}
+      </TerminalCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TerminalCard title="TRADER PROFILE" subtitle="KI behavioral analysis">

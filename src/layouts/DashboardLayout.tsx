@@ -38,10 +38,10 @@ export default function DashboardLayout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-black relative">
+      <div className="min-h-screen h-screen flex w-full bg-black relative overflow-hidden">
         <div className="fixed inset-0 grid-pattern opacity-[0.08] pointer-events-none" />
         <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0 relative z-10">
+        <div className="flex-1 flex flex-col min-w-0 relative z-10 h-screen">
           {!isChatSurface && (
           <header className="sticky top-0 z-20 h-12 flex items-center border-b border-[hsl(0_0%_12%)] bg-black px-4 gap-3">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
@@ -71,11 +71,11 @@ export default function DashboardLayout() {
           )}
           <main className={isChatSurface
             ? "flex-1 overflow-hidden p-0"
-            : "flex-1 overflow-auto p-4 sm:p-6 pb-16 sm:pb-6"}>
+            : "flex-1 overflow-auto p-4 sm:p-6"}>
             <Outlet />
           </main>
+          <MobileBottomNav />
         </div>
-        <MobileBottomNav />
         <SmaiPopups />
       </div>
     </SidebarProvider>

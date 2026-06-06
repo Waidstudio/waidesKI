@@ -34,9 +34,9 @@ export default function Landing() {
             <Zap className="h-5 w-5 text-primary" />
             <span className="font-mono text-sm font-bold text-foreground tracking-wider">WAIDES KI</span>
           </div>
-          <Link to="/dashboard">
+          <Link to="/auth">
             <Button variant="outline" size="sm" className="font-mono text-xs border-primary/30 text-primary hover:bg-primary/10 hover:text-primary">
-              Enter Dashboard
+              Sign in / Register
             </Button>
           </Link>
         </div>
@@ -54,9 +54,9 @@ export default function Landing() {
             Waides KI is a living Konsmik Entity — designed to think, interpret, and act like a high-level human market intelligence system, with deeper layers of awareness. Not every opportunity is worth taking — only aligned opportunities matter.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/dashboard">
+            <Link to="/auth">
               <Button size="lg" className="font-mono text-sm bg-primary text-primary-foreground hover:bg-primary/90 glow-primary w-full sm:w-auto">
-                Access Intelligence
+                Get Started
               </Button>
             </Link>
             <a href="#philosophy">
@@ -164,7 +164,7 @@ export default function Landing() {
       {/* CTA */}
       <section className="relative z-10 container mx-auto px-4 py-16 text-center">
         <p className="text-muted-foreground text-sm mb-4">Don't chase signals — align with intelligence.</p>
-        <Link to="/dashboard">
+        <Link to="/auth">
           <Button size="lg" className="font-mono bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
             Enter Waides KI Dashboard
           </Button>

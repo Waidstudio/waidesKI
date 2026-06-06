@@ -1,4 +1,4 @@
-import Chat from './Chat';
+import Landing from './Landing';
 
-const Index = Chat;
+const Index = Landing;
 export default Index;
