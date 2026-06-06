@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Sparkles, Plus, ThumbsUp, ArrowLeft, ChevronDown, Brain, Atom, Activity } from 'lucide-react';
+import { Send, Sparkles, Plus, ThumbsUp, ArrowLeft, ChevronDown, Brain, Atom, Activity, Trash2, MessageSquarePlus } from 'lucide-react';
 import { kiRespond } from '@/lib/konsmia/soul-voice';
 import { supabase } from '@/integrations/supabase/client';
 import type { ChatMessage, KIMode } from '@/lib/konsmia/types';
@@ -73,6 +73,15 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
   const [entityMenuOpen, setEntityMenuOpen] = useState(false);
   const entity = ENTITIES[entityId];
 
+  // Per-entity active session id (allows "new chat")
+  const [sessionByEntity, setSessionByEntity] = useState<Record<EntityId, string>>(() =>
+    ENTITY_ORDER.reduce((acc, id) => {
+      acc[id] = `entity-${id}`;
+      return acc;
+    }, {} as Record<EntityId, string>)
+  );
+  const sessionId = sessionByEntity[entityId];
+
   const [messagesByEntity, setMessagesByEntity] = useState<Record<EntityId, ChatMessage[]>>(() =>
     ENTITY_ORDER.reduce((acc, id) => {
       acc[id] = [
@@ -114,14 +123,15 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
 
   // Load history per entity once
   useEffect(() => {
-    if (loadedEntities.current.has(entityId)) return;
-    loadedEntities.current.add(entityId);
+    const key = `${entityId}::${sessionId}`;
+    if (loadedEntities.current.has(key)) return;
+    loadedEntities.current.add(key);
     (async () => {
       try {
         const { data } = await supabase
           .from('chat_messages')
           .select('*')
-          .eq('session_id', `entity-${entityId}`)
+          .eq('session_id', sessionId)
           .order('created_at', { ascending: true })
           .limit(100);
         if (data && data.length > 0) {
@@ -142,13 +152,13 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
         console.warn('Failed to load chat history:', e);
       }
     })();
-  }, [entityId]);
+  }, [entityId, sessionId]);
 
   const persistMessage = useCallback(
     async (role: string, content: string) => {
       try {
         await supabase.from('chat_messages').insert({
-          session_id: `entity-${entityId}`,
+          session_id: sessionId,
           role,
           content,
         });
@@ -156,8 +166,34 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
         console.warn('Failed to persist message:', e);
       }
     },
-    [entityId]
+    [sessionId]
   );
+
+  const startNewChat = useCallback(() => {
+    const newId = `entity-${entityId}-${Date.now()}`;
+    setSessionByEntity(prev => ({ ...prev, [entityId]: newId }));
+    setMessagesByEntity(prev => ({
+      ...prev,
+      [entityId]: [
+        {
+          id: `welcome-${entityId}-${Date.now()}`,
+          role: 'ki',
+          content: entity.welcome,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    }));
+  }, [entityId, entity.welcome]);
+
+  const deleteCurrentChat = useCallback(async () => {
+    if (!confirm('Delete this conversation? This cannot be undone.')) return;
+    try {
+      await supabase.from('chat_messages').delete().eq('session_id', sessionId);
+    } catch (e) {
+      console.warn('Failed to delete chat:', e);
+    }
+    startNewChat();
+  }, [sessionId, startNewChat]);
 
   const streamFromAI = useCallback(
     async (userMessage: string, history: ChatMessage[]) => {
@@ -317,23 +353,23 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {/* Compact chat header */}
-      <div className="flex items-center gap-2 px-2 py-2 border-b border-[hsl(0_0%_12%)] bg-black/95 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[hsl(0_0%_12%)] bg-gradient-to-b from-black to-[hsl(0_0%_4%)] shrink-0 shadow-[0_1px_0_hsl(185_100%_55%/0.1)]">
         <button
           onClick={() => navigate(-1)}
           aria-label="Back"
-          className="h-8 w-8 rounded-full flex items-center justify-center text-foreground/80 hover:bg-white/5 hover:text-primary transition-colors"
+          className="h-9 w-9 rounded-full flex items-center justify-center text-foreground/80 hover:bg-white/5 hover:text-primary transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="relative">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-[hsl(185_100%_55%/0.25)] to-[hsl(280_90%_65%/0.25)] border border-[hsl(185_100%_55%/0.4)]">
-            <EntityIcon className="h-3.5 w-3.5 text-primary" />
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-[hsl(185_100%_55%/0.3)] to-[hsl(280_90%_65%/0.3)] border border-[hsl(185_100%_55%/0.5)] shadow-[0_0_10px_-3px_hsl(185_100%_55%/0.6)]">
+            <EntityIcon className="h-4 w-4 text-primary" />
           </div>
           <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary border-2 border-black shadow-[0_0_4px_hsl(185_100%_55%)]" />
         </div>
         <button
           onClick={() => setEntityMenuOpen(o => !o)}
-          className="flex-1 min-w-0 flex items-center gap-1 text-left active:opacity-70 transition-opacity"
+          className="flex-1 min-w-0 flex items-center gap-1 text-left active:opacity-70 transition-opacity rounded-lg px-1 py-0.5 hover:bg-white/5"
         >
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-foreground leading-tight truncate">
@@ -349,6 +385,22 @@ export function KIChatInterface({ mode = 'balanced' }: Props) {
               entityMenuOpen && 'rotate-180'
             )}
           />
+        </button>
+        <button
+          onClick={startNewChat}
+          aria-label="New chat"
+          title="New chat"
+          className="h-9 w-9 rounded-full flex items-center justify-center text-foreground/80 hover:bg-primary/10 hover:text-primary transition-colors"
+        >
+          <MessageSquarePlus className="h-4 w-4" />
+        </button>
+        <button
+          onClick={deleteCurrentChat}
+          aria-label="Delete chat"
+          title="Delete chat"
+          className="h-9 w-9 rounded-full flex items-center justify-center text-foreground/80 hover:bg-danger/10 hover:text-danger transition-colors"
+        >
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
 
