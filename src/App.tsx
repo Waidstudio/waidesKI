@@ -22,6 +22,7 @@ import SmaiChinnikstah from "./pages/SmaiChinnikstah.tsx";
 import Sandbox from "./pages/Sandbox.tsx";
 import Tredbeings from "./pages/Tredbeings.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Auth from "./pages/Auth.tsx";
 
 const queryClient = new QueryClient();
 
@@ -33,8 +34,9 @@ const App = () => (
       <BrowserRouter>
         <ErrorBoundary>
           <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
             <Route element={<DashboardLayout />}>
-              <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/signals" element={<Signals />} />
